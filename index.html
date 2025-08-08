@@ -477,291 +477,292 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
     <script>
-        // Firebase configuration - REPLACE WITH YOUR CONFIG
-        const firebaseConfig = {
-            apiKey: "AIzaSyBVqwTWtn",
-            authDomain: "star-chat-cb394.firebaseapp.com",
-            databaseURL: "https://star-chat-cb394-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "star-chat-cb394",
-            storageBucket: "star-chat-cb394.appspot.com",
-            messagingSenderId: "412302002357",
-            appId: "1:412302002357:web:60da2f9ef80e85e23416fc",
-            measurementId: "G-S4VJI"
-        };
+// Firebase configuration - REPLACE WITH YOUR CONFIG
+const firebaseConfig = {
+    apiKey: "AIzaSyBVqwTWtn",
+    authDomain: "star-chat-cb394.firebaseapp.com",
+    databaseURL: "https://star-chat-cb394-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "star-chat-cb394",
+    storageBucket: "star-chat-cb394.appspot.com",
+    messagingSenderId: "412302002357",
+    appId: "1:412302002357:web:60da2f9ef80e85e23416fc",
+    measurementId: "G-S4VJI"
+};
 
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+// Initialize Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
 
-        // Current user data
-        let currentUser = null;
-        let userRef = null;
+// Current user data
+let currentUser = null;
+let userRef = null;
 
-        // Initialize the app
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set up PIN input auto-focus
-            function setupPinInputs(inputs) {
-                inputs.forEach((input, index) => {
-                    // Focus first input initially
-                    if (index === 0) {
-                        setTimeout(() => input.focus(), 100);
-                    }
-                    
-                    input.addEventListener('input', (e) => {
-                        if (input.value.length === 1 && index < inputs.length - 1) {
-                            inputs[index + 1].focus();
-                        }
-                        // Clear error when typing
-                        const errorElement = input.closest('.modal-input-group')?.querySelector('.error-message');
-                        if (errorElement) {
-                            errorElement.textContent = '';
-                        }
-                    });
-                    
-                    input.addEventListener('keydown', (e) => {
-                        if (e.key === 'Backspace' && input.value.length === 0 && index > 0) {
-                            inputs[index - 1].focus();
-                        }
-                    });
-                });
+// Initialize the app
+document.addEventListener('DOMContentLoaded', function() {
+    // Set up PIN input auto-focus
+    function setupPinInputs(inputs) {
+        inputs.forEach((input, index) => {
+            // Focus first input initially
+            if (index === 0) {
+                setTimeout(() => input.focus(), 100);
             }
             
-            // Setup login PIN inputs
-            const loginPinInputs = document.querySelectorAll('.pin-input');
-            setupPinInputs(loginPinInputs);
-            
-            // Login submission
-            document.getElementById('login-submit').addEventListener('click', function() {
-                const cardId = document.getElementById('card-id-input').value.trim();
-                let pin = '';
-                loginPinInputs.forEach(input => {
-                    pin += input.value;
-                });
-                
-                if (cardId === '') {
-                    alert('Please enter your Card ID');
-                    return;
+            input.addEventListener('input', (e) => {
+                if (input.value.length === 1 && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
                 }
-                
-                if (pin.length !== 5) {
-                    alert('Please enter a complete 5-digit PIN');
-                    return;
-                }
-                
-                // Check predefined users
-                if ((cardId === "5555555555" && pin === "55555") || 
-                    (cardId === "1111111111" && pin === "11111")) {
-                    
-                    // Set current user
-                    currentUser = {
-                        cardId: cardId,
-                        pin: pin,
-                        name: cardId === "5555555555" ? "User One" : "User Two"
-                    };
-                    
-                    // Get user reference
-                    userRef = database.ref('users/' + cardId);
-                    
-                    // Set up real-time listener
-                    userRef.on('value', (snapshot) => {
-                        const userData = snapshot.val();
-                        if (userData) {
-                            // Update UI with latest balance
-                            document.getElementById('coin-display').textContent = userData.balance || 0;
-                            if (document.getElementById('account-screen').classList.contains('active')) {
-                                document.getElementById('account-balance').textContent = 
-                                    (userData.balance || 0) + " Star Coins";
-                            }
-                        } else {
-                            // Initialize new user with default balance
-                            userRef.set({
-                                name: currentUser.name,
-                                balance: 1000,
-                                cardId: cardId
-                            });
-                        }
-                    });
-                    
-                    // Update UI
-                    document.getElementById('login-screen').style.display = 'none';
-                    document.getElementById('app-content').style.display = 'flex';
-                    
-                    // Show account info
-                    document.getElementById('account-name').textContent = currentUser.name;
-                    document.getElementById('account-id').textContent = currentUser.cardId;
-                    
-                } else {
-                    alert('Invalid Card ID or PIN. Only predefined cards are allowed.');
+                // Clear error when typing
+                const errorElement = input.closest('.modal-input-group')?.querySelector('.error-message');
+                if (errorElement) {
+                    errorElement.textContent = '';
                 }
             });
             
-            // Screen navigation
-            function showScreen(screenId) {
-                // Hide all screens
-                document.querySelectorAll('.screen').forEach(screen => {
-                    screen.classList.remove('active');
-                });
-                document.querySelectorAll('.account-screen').forEach(screen => {
-                    screen.classList.remove('active');
-                });
-                
-                // Show selected screen
-                const screen = document.getElementById(screenId);
-                if (screen) {
-                    screen.classList.add('active');
-                    
-                    // If showing account screen, update the info
-                    if (screenId === 'account-screen' && currentUser) {
-                        document.getElementById('account-name').textContent = currentUser.name;
-                        document.getElementById('account-id').textContent = currentUser.cardId;
-                        
-                        // Get current balance from display (since we have real-time updates)
-                        const balance = document.getElementById('coin-display').textContent;
-                        document.getElementById('account-balance').textContent = balance + " Star Coins";
-                    }
-                }
-                
-                // Update footer active state
-                document.querySelectorAll('.footer-item').forEach(item => {
-                    item.classList.remove('active');
-                });
-                
-                // Set clicked item as active
-                event.currentTarget.classList.add('active');
-            }
-            
-            // Transfer functionality
-            document.getElementById('transfer-btn').addEventListener('click', function() {
-                // Show the transfer modal
-                document.getElementById('transfer-modal').style.display = 'flex';
-                
-                // Clear all inputs and messages
-                document.getElementById('recipient-id').value = '';
-                document.getElementById('transfer-amount').value = '';
-                document.getElementById('recipient-name').textContent = '';
-                document.getElementById('amount-error').textContent = '';
-                document.getElementById('transfer-success').style.display = 'none';
-                
-                // Change confirm button text back to "Confirm"
-                document.getElementById('confirm-transfer').textContent = 'Confirm';
-                document.getElementById('confirm-transfer').style.display = 'block';
-                document.getElementById('cancel-transfer').textContent = 'Cancel';
-            });
-            
-            // Check recipient ID when typing
-            document.getElementById('recipient-id').addEventListener('input', function() {
-                const recipientId = this.value.trim();
-                const recipientNameDisplay = document.getElementById('recipient-name');
-                
-                if (recipientId.length === 0) {
-                    recipientNameDisplay.textContent = '';
-                    return;
-                }
-                
-                // Check predefined users
-                if (recipientId === "5555555555") {
-                    recipientNameDisplay.textContent = 'Account: User One';
-                } else if (recipientId === "1111111111") {
-                    recipientNameDisplay.textContent = 'Account: User Two';
-                } else {
-                    recipientNameDisplay.textContent = '';
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && input.value.length === 0 && index > 0) {
+                    inputs[index - 1].focus();
                 }
             });
-            
-            // Cancel transfer
-            document.getElementById('cancel-transfer').addEventListener('click', function() {
-                document.getElementById('transfer-modal').style.display = 'none';
-            });
-            
-            // Confirm transfer
-            document.getElementById('confirm-transfer').addEventListener('click', async function() {
-                const recipientId = document.getElementById('recipient-id').value.trim();
-                const amount = parseInt(document.getElementById('transfer-amount').value);
-                const currentBalance = parseInt(document.getElementById('coin-display').textContent);
-                
-                // Validate inputs
-                let isValid = true;
-                
-                if (recipientId.length === 0) {
-                    alert('Please enter recipient Card ID');
-                    isValid = false;
-                } 
-                else if (recipientId === currentUser.cardId) {
-                    alert('You cannot transfer to yourself');
-                    isValid = false;
-                }
-                else if (recipientId !== "5555555555" && recipientId !== "1111111111") {
-                    alert('Recipient account not found');
-                    isValid = false;
-                } 
-                else if (isNaN(amount) || amount <= 0) {
-                    document.getElementById('amount-error').textContent = 'Please enter a valid amount';
-                    isValid = false;
-                } 
-                else if (amount > currentBalance) {
-                    document.getElementById('amount-error').textContent = 'Insufficient balance';
-                    isValid = false;
-                }
-                
-                if (!isValid) return;
-                
-                try {
-                    // Process transfer using Firebase transaction
-                    const senderRef = database.ref('users/' + currentUser.cardId);
-                    const recipientRef = database.ref('users/' + recipientId);
-                    
-                    // First get both users' data
-                    const [senderSnapshot, recipientSnapshot] = await Promise.all([
-                        senderRef.once('value'),
-                        recipientRef.once('value')
-                    ]);
-                    
-                    const senderData = senderSnapshot.val();
-                    const recipientData = recipientSnapshot.val();
-                    
-                    if (!senderData || !recipientData) {
-                        throw new Error('Account not found');
-                    }
-                    
-                    if (senderData.balance < amount) {
-                        throw new Error('Insufficient balance');
-                    }
-                    
-                    // Update balances
-                    await Promise.all([
-                        senderRef.update({
-                            balance: senderData.balance - amount
-                        }),
-                        recipientRef.update({
-                            balance: (recipientData.balance || 0) + amount
-                        })
-                    ]);
-                    
-                    // Create transaction record
-                    const transactionsRef = database.ref('transactions').push();
-                    await transactionsRef.set({
-                        from: currentUser.cardId,
-                        fromName: currentUser.name,
-                        to: recipientId,
-                        toName: recipientId === "5555555555" ? "User One" : "User Two",
-                        amount: amount,
-                        timestamp: firebase.database.ServerValue.TIMESTAMP
-                    });
-                    
-                    // Show success message
-                    document.getElementById('transfer-success').style.display = 'block';
-                    document.getElementById('confirm-transfer').style.display = 'none';
-                    document.getElementById('cancel-transfer').textContent = 'Close';
-                    
-                } catch (error) {
-                    console.error('Transfer error:', error);
-                    alert('Transfer failed: ' + error.message);
-                }
-            });
-            
-            // Expose showScreen to global scope for footer buttons
-            window.showScreen = showScreen;
         });
+    }
+    
+    // Setup login PIN inputs
+    const loginPinInputs = document.querySelectorAll('.pin-input');
+    setupPinInputs(loginPinInputs);
+    
+    // Login submission
+    document.getElementById('login-submit').addEventListener('click', function() {
+        const cardId = document.getElementById('card-id-input').value.trim();
+        let pin = '';
+        loginPinInputs.forEach(input => {
+            pin += input.value;
+        });
+        
+        if (cardId === '') {
+            alert('Please enter your Card ID');
+            return;
+        }
+        
+        if (pin.length !== 5) {
+            alert('Please enter a complete 5-digit PIN');
+            return;
+        }
+        
+        // Check predefined users
+        if ((cardId === "5555555555" && pin === "55555") || 
+            (cardId === "1111111111" && pin === "11111")) {
+            
+            // Set current user
+            currentUser = {
+                cardId: cardId,
+                pin: pin,
+                name: cardId === "5555555555" ? "User One" : "User Two"
+            };
+            
+            // Get user reference
+            userRef = database.ref('users/' + cardId);
+            
+            // Set up real-time listener
+            userRef.on('value', (snapshot) => {
+                const userData = snapshot.val();
+                if (userData) {
+                    // Update UI with latest balance
+                    document.getElementById('coin-display').textContent = userData.balance || 1000;
+                    if (document.getElementById('account-screen').classList.contains('active')) {
+                        document.getElementById('account-balance').textContent = 
+                            (userData.balance || 1000) + " Star Coins";
+                    }
+                } else {
+                    // Initialize new user with default balance of 1000
+                    userRef.set({
+                        name: currentUser.name,
+                        balance: 1000,
+                        cardId: cardId
+                    });
+                }
+            });
+            
+            // Update UI
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-content').style.display = 'flex';
+            
+            // Show account info
+            document.getElementById('account-name').textContent = currentUser.name;
+            document.getElementById('account-id').textContent = currentUser.cardId;
+            
+        } else {
+            alert('Invalid Card ID or PIN. Only predefined cards are allowed.');
+        }
+    });
+    
+    // Screen navigation
+    function showScreen(screenId) {
+        // Hide all screens
+        document.querySelectorAll('.screen').forEach(screen => {
+            screen.classList.remove('active');
+        });
+        document.querySelectorAll('.account-screen').forEach(screen => {
+            screen.classList.remove('active');
+        });
+        
+        // Show selected screen
+        const screen = document.getElementById(screenId);
+        if (screen) {
+            screen.classList.add('active');
+            
+            // If showing account screen, update the info
+            if (screenId === 'account-screen' && currentUser) {
+                document.getElementById('account-name').textContent = currentUser.name;
+                document.getElementById('account-id').textContent = currentUser.cardId;
+                
+                // Get current balance from display (since we have real-time updates)
+                const balance = document.getElementById('coin-display').textContent;
+                document.getElementById('account-balance').textContent = balance + " Star Coins";
+            }
+        }
+        
+        // Update footer active state
+        document.querySelectorAll('.footer-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        // Set clicked item as active
+        event.currentTarget.classList.add('active');
+    }
+    
+    // Transfer functionality
+    document.getElementById('transfer-btn').addEventListener('click', function() {
+        // Show the transfer modal
+        document.getElementById('transfer-modal').style.display = 'flex';
+        
+        // Clear all inputs and messages
+        document.getElementById('recipient-id').value = '';
+        document.getElementById('transfer-amount').value = '';
+        document.getElementById('recipient-name').textContent = '';
+        document.getElementById('amount-error').textContent = '';
+        document.getElementById('transfer-success').style.display = 'none';
+        
+        // Change confirm button text back to "Confirm"
+        document.getElementById('confirm-transfer').textContent = 'Confirm';
+        document.getElementById('confirm-transfer').style.display = 'block';
+        document.getElementById('cancel-transfer').textContent = 'Cancel';
+    });
+    
+    // Check recipient ID when typing
+    document.getElementById('recipient-id').addEventListener('input', function() {
+        const recipientId = this.value.trim();
+        const recipientNameDisplay = document.getElementById('recipient-name');
+        
+        if (recipientId.length === 0) {
+            recipientNameDisplay.textContent = '';
+            return;
+        }
+        
+        // Check predefined users
+        if (recipientId === "5555555555") {
+            recipientNameDisplay.textContent = 'Account: User One';
+        } else if (recipientId === "1111111111") {
+            recipientNameDisplay.textContent = 'Account: User Two';
+        } else {
+            recipientNameDisplay.textContent = '';
+        }
+    });
+    
+    // Cancel transfer
+    document.getElementById('cancel-transfer').addEventListener('click', function() {
+        document.getElementById('transfer-modal').style.display = 'none';
+    });
+    
+    // Confirm transfer
+    document.getElementById('confirm-transfer').addEventListener('click', async function() {
+        const recipientId = document.getElementById('recipient-id').value.trim();
+        const amount = parseInt(document.getElementById('transfer-amount').value);
+        const currentBalance = parseInt(document.getElementById('coin-display').textContent);
+        
+        // Validate inputs
+        let isValid = true;
+        
+        if (recipientId.length === 0) {
+            alert('Please enter recipient Card ID');
+            isValid = false;
+        } 
+        else if (recipientId === currentUser.cardId) {
+            alert('You cannot transfer to yourself');
+            isValid = false;
+        }
+        else if (recipientId !== "5555555555" && recipientId !== "1111111111") {
+            alert('Recipient account not found');
+            isValid = false;
+        } 
+        else if (isNaN(amount) || amount <= 0) {
+            document.getElementById('amount-error').textContent = 'Please enter a valid amount';
+            isValid = false;
+        } 
+        else if (amount > currentBalance) {
+            document.getElementById('amount-error').textContent = 'Insufficient balance';
+            isValid = false;
+        }
+        
+        if (!isValid) return;
+        
+        try {
+            // Process transfer using Firebase transaction
+            const senderRef = database.ref('users/' + currentUser.cardId);
+            const recipientRef = database.ref('users/' + recipientId);
+            
+            // First get both users' data
+            const [senderSnapshot, recipientSnapshot] = await Promise.all([
+                senderRef.once('value'),
+                recipientRef.once('value')
+            ]);
+            
+            const senderData = senderSnapshot.val();
+            const recipientData = recipientSnapshot.val();
+            
+            if (!senderData || !recipientData) {
+                throw new Error('Account not found');
+            }
+            
+            if (senderData.balance < amount) {
+                throw new Error('Insufficient balance');
+            }
+            
+            // Update balances
+            await Promise.all([
+                senderRef.update({
+                    balance: senderData.balance - amount
+                }),
+                recipientRef.update({
+                    balance: (recipientData.balance || 1000) + amount
+                })
+            ]);
+            
+            // Create transaction record
+            const transactionsRef = database.ref('transactions').push();
+            await transactionsRef.set({
+                from: currentUser.cardId,
+                fromName: currentUser.name,
+                to: recipientId,
+                toName: recipientId === "5555555555" ? "User One" : "User Two",
+                amount: amount,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+            
+            // Show success message
+            document.getElementById('transfer-success').style.display = 'block';
+            document.getElementById('confirm-transfer').style.display = 'none';
+            document.getElementById('cancel-transfer').textContent = 'Close';
+            
+        } catch (error) {
+            console.error('Transfer error:', error);
+            alert('Transfer failed: ' + error.message);
+        }
+    });
+    
+    // Expose showScreen to global scope for footer buttons
+    window.showScreen = showScreen;
+});
+        
     </script>
 </body>
 </html>
