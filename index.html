@@ -1,4 +1,4 @@
-<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <title>Star Coins Wallet</title>
@@ -288,7 +288,12 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  // Remove local `users` data
+  // Database
+  let users = {
+    "ID100001": { name: "John", pin: "12345", balance: 500 },
+    "ID100002": { name: "Alice", pin: "54321", balance: 1000 }
+  };
+  
   let currentUser = null;
   let currentTransfer = {};
 
@@ -301,36 +306,19 @@
     }
   }
 
-  // Registration (save to Firebase)
+  // Registration (local only - original)
   function registerAccount() {
     const name = document.getElementById('user-name').value.trim();
     const pin = document.getElementById('user-pin').value;
-
     if (!name || !pin || pin.length !== 5 || isNaN(pin)) {
       alert("Please enter your name and a valid 5-digit PIN");
       return;
     }
-
     const userId = 'ID' + Math.floor(100000 + Math.random() * 900000);
-    currentUser = { id: userId, name, pin, balance: 1000 };
-
-    db.ref('users/' + userId).set(currentUser)
-      .then(() => {
-        document.getElementById('user-id').textContent = userId;
-        listenUserBalance(userId);
-        showScreen('home-screen');
-      })
-      .catch(err => alert("Error: " + err.message));
-  }
-
-  // Listen for balance changes
-  function listenUserBalance(userId) {
-    db.ref('users/' + userId + '/balance').on('value', snap => {
-      if (snap.exists()) {
-        currentUser.balance = snap.val();
-        document.querySelector('#home-screen .balance').textContent = currentUser.balance;
-      }
-    });
+    currentUser = { id: userId, name: name, pin: pin, balance: 1000 };
+    users[userId] = currentUser;
+    document.getElementById('user-id').textContent = userId;
+    showScreen('home-screen');
   }
 
   // Transfer functions
@@ -341,9 +329,12 @@
   function verifyReceiver() {
     const receiverId = document.getElementById('receiver-id').value.trim();
     const amount = parseInt(document.getElementById('transfer-amount').value);
-
     if (!receiverId || !amount) {
       alert("Please enter receiver ID and amount");
+      return;
+    }
+    if (!users[receiverId]) {
+      alert("Receiver ID not found");
       return;
     }
     if (receiverId === currentUser.id) {
@@ -354,20 +345,16 @@
       alert("Amount must be positive");
       return;
     }
-
-    db.ref('users/' + receiverId).once('value').then(snap => {
-      if (!snap.exists()) {
-        alert("Receiver ID not found");
-        return;
-      }
-      const rData = snap.val();
-      currentTransfer = { receiverId, receiverName: rData.name, amount };
-      document.getElementById('receiver-name').textContent = rData.name;
-      document.getElementById('receiver-info').style.display = 'block';
-      document.getElementById('confirm-receiver').textContent = rData.name;
-      document.getElementById('confirm-amount').textContent = amount;
-      showScreen('pin-screen');
-    });
+    currentTransfer = {
+      receiverId: receiverId,
+      receiverName: users[receiverId].name,
+      amount: amount
+    };
+    document.getElementById('receiver-name').textContent = users[receiverId].name;
+    document.getElementById('receiver-info').style.display = 'block';
+    document.getElementById('confirm-receiver').textContent = users[receiverId].name;
+    document.getElementById('confirm-amount').textContent = amount;
+    showScreen('pin-screen');
   }
 
   function completeTransfer() {
@@ -376,33 +363,32 @@
       alert("Incorrect PIN");
       return;
     }
+    if (currentTransfer.amount > currentUser.balance) {
+      alert("Insufficient balance");
+      return;
+    }
 
+    // --- Local update (original) ---
+    currentUser.balance -= currentTransfer.amount;
+    users[currentTransfer.receiverId].balance += currentTransfer.amount;
+
+    // --- Firebase update (new) ---
     const senderRef = db.ref('users/' + currentUser.id + '/balance');
     const receiverRef = db.ref('users/' + currentTransfer.receiverId + '/balance');
 
     senderRef.transaction(curr => {
-      if (curr === null) return;
-      if (curr >= currentTransfer.amount) {
-        return curr - currentTransfer.amount;
-      }
-      return;
-    }, (error, committed) => {
-      if (error) {
-        alert("Error: " + error.message);
-      } else if (!committed) {
-        alert("Insufficient balance");
-      } else {
-        receiverRef.transaction(curr => (curr || 0) + currentTransfer.amount, err2 => {
-          if (err2) {
-            alert("Error updating receiver balance");
-          } else {
-            document.getElementById('sent-amount').textContent = currentTransfer.amount;
-            document.getElementById('sent-to').textContent = currentTransfer.receiverName;
-            showScreen('success-screen');
-          }
-        });
-      }
+      if (curr === null) return currentUser.balance; // set if not exists
+      return curr - currentTransfer.amount;
     });
+    receiverRef.transaction(curr => {
+      if (curr === null) return currentTransfer.amount;
+      return (curr || 0) + currentTransfer.amount;
+    });
+
+    // Show success
+    document.getElementById('sent-amount').textContent = currentTransfer.amount;
+    document.getElementById('sent-to').textContent = currentTransfer.receiverName;
+    showScreen('success-screen');
   }
 
   function showBuyScreen() {
