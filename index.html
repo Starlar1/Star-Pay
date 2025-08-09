@@ -271,12 +271,12 @@
 
 
 <!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
 <script>
-  // Firebase Config
-  const firebaseConfig = {
+// Firebase Config
+const firebaseConfig = {
     apiKey: "AIzaSyDOxtdux0hLUfmmFs2RYrU13VU0gX7vd_U",
     authDomain: "star-payment.firebaseapp.com",
     databaseURL: "https://star-payment-default-rtdb.firebaseio.com",
@@ -284,116 +284,144 @@
     storageBucket: "star-payment.appspot.com",
     messagingSenderId: "996369221516",
     appId: "1:996369221516:web:c833bf87f2f6d9826db8a9"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-  // Database
-  let users = {
+// Local Database
+let users = {
     "ID100001": { name: "John", pin: "12345", balance: 500 },
     "ID100002": { name: "Alice", pin: "54321", balance: 1000 }
-  };
-  
-  let currentUser = null;
-  let currentTransfer = {};
+};
 
-  // Screen navigation
-  function showScreen(screenId) {
+let currentUser = null;
+let currentTransfer = {};
+
+// Screen navigation
+function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
     if (screenId === 'home-screen' && currentUser) {
-      document.querySelector('#home-screen .balance').textContent = currentUser.balance;
+        document.querySelector('#home-screen .balance').textContent = currentUser.balance;
     }
-  }
+}
 
-  // Registration (local only - original)
-  function registerAccount() {
+// Registration (Local Only)
+function registerAccount() {
     const name = document.getElementById('user-name').value.trim();
     const pin = document.getElementById('user-pin').value;
+
     if (!name || !pin || pin.length !== 5 || isNaN(pin)) {
-      alert("Please enter your name and a valid 5-digit PIN");
-      return;
+        alert("Please enter your name and a valid 5-digit PIN");
+        return;
     }
+
     const userId = 'ID' + Math.floor(100000 + Math.random() * 900000);
     currentUser = { id: userId, name: name, pin: pin, balance: 1000 };
+
     users[userId] = currentUser;
+
     document.getElementById('user-id').textContent = userId;
     showScreen('home-screen');
-  }
+}
 
-  // Transfer functions
-  function showTransferScreen() { showScreen('transfer-screen'); }
-  function backToHome() { showScreen('home-screen'); }
-  function backToTransfer() { showScreen('transfer-screen'); }
+// Transfer functions
+function showTransferScreen() {
+    showScreen('transfer-screen');
+}
+function backToHome() {
+    showScreen('home-screen');
+}
+function backToTransfer() {
+    showScreen('transfer-screen');
+}
 
-  function verifyReceiver() {
+// Verify Receiver from Firebase
+function verifyReceiver() {
     const receiverId = document.getElementById('receiver-id').value.trim();
     const amount = parseInt(document.getElementById('transfer-amount').value);
+
     if (!receiverId || !amount) {
-      alert("Please enter receiver ID and amount");
-      return;
-    }
-    if (!users[receiverId]) {
-      alert("Receiver ID not found");
-      return;
+        alert("Please enter receiver ID and amount");
+        return;
     }
     if (receiverId === currentUser.id) {
-      alert("You cannot transfer to yourself");
-      return;
+        alert("You cannot transfer to yourself");
+        return;
     }
     if (amount <= 0) {
-      alert("Amount must be positive");
-      return;
+        alert("Amount must be positive");
+        return;
     }
-    currentTransfer = {
-      receiverId: receiverId,
-      receiverName: users[receiverId].name,
-      amount: amount
-    };
-    document.getElementById('receiver-name').textContent = users[receiverId].name;
-    document.getElementById('receiver-info').style.display = 'block';
-    document.getElementById('confirm-receiver').textContent = users[receiverId].name;
-    document.getElementById('confirm-amount').textContent = amount;
-    showScreen('pin-screen');
-  }
 
-  function completeTransfer() {
+    // Check receiver in Firebase
+    db.ref("users/" + receiverId).once("value")
+    .then(snapshot => {
+        if (!snapshot.exists()) {
+            alert("Receiver ID not found in Firebase");
+            return;
+        }
+        const receiverData = snapshot.val();
+
+        currentTransfer = {
+            receiverId: receiverId,
+            receiverName: receiverData.name || "Unknown",
+            amount: amount
+        };
+
+        document.getElementById('receiver-name').textContent = currentTransfer.receiverName;
+        document.getElementById('receiver-info').style.display = 'block';
+        document.getElementById('confirm-receiver').textContent = currentTransfer.receiverName;
+        document.getElementById('confirm-amount').textContent = amount;
+
+        showScreen('pin-screen');
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Error checking receiver in Firebase");
+    });
+}
+
+// Complete Transfer (Update Local + Firebase)
+function completeTransfer() {
     const pin = document.getElementById('confirm-pin').value;
+
     if (pin !== currentUser.pin) {
-      alert("Incorrect PIN");
-      return;
+        alert("Incorrect PIN");
+        return;
     }
     if (currentTransfer.amount > currentUser.balance) {
-      alert("Insufficient balance");
-      return;
+        alert("Insufficient balance");
+        return;
     }
 
-    // --- Local update (original) ---
+    // Deduct from sender local
     currentUser.balance -= currentTransfer.amount;
-    users[currentTransfer.receiverId].balance += currentTransfer.amount;
 
-    // --- Firebase update (new) ---
-    const senderRef = db.ref('users/' + currentUser.id + '/balance');
-    const receiverRef = db.ref('users/' + currentTransfer.receiverId + '/balance');
+    // Update sender & receiver balance in Firebase
+    db.ref("users/" + currentTransfer.receiverId + "/balance").once("value")
+    .then(snapshot => {
+        let receiverBalance = snapshot.val() || 0;
+        receiverBalance += currentTransfer.amount;
 
-    senderRef.transaction(curr => {
-      if (curr === null) return currentUser.balance; // set if not exists
-      return curr - currentTransfer.amount;
+        // Save updated balances
+        db.ref("users/" + currentTransfer.receiverId + "/balance").set(receiverBalance);
+        db.ref("users/" + currentUser.id + "/balance").set(currentUser.balance);
+
+        // Show success
+        document.getElementById('sent-amount').textContent = currentTransfer.amount;
+        document.getElementById('sent-to').textContent = currentTransfer.receiverName;
+        showScreen('success-screen');
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Error completing transfer");
     });
-    receiverRef.transaction(curr => {
-      if (curr === null) return currentTransfer.amount;
-      return (curr || 0) + currentTransfer.amount;
-    });
+}
 
-    // Show success
-    document.getElementById('sent-amount').textContent = currentTransfer.amount;
-    document.getElementById('sent-to').textContent = currentTransfer.receiverName;
-    showScreen('success-screen');
-  }
-
-  function showBuyScreen() {
+function showBuyScreen() {
     alert("Buy/Sell feature coming soon!");
-  }
+}
 </script>
 </body>
 </html>
