@@ -1,0 +1,413 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html>
+<head>
+    <title>Star Coins Wallet</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --accent: #4895ef;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --gold: #FFD700;
+            --light: #f8f9fa;
+            --dark: #212529;
+        }
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: var(--dark);
+            touch-action: manipulation;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .app-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+        }
+        .screen {
+            display: none;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+            flex-direction: column;
+            transform: translateZ(0);
+        }
+        .active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .header {
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+        }
+        .back-btn {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        h2 {
+            margin: 0;
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+        .content {
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .icon {
+            font-size: 1.2rem;
+            margin-right: 8px;
+        }
+        input {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            background-color: #f9f9f9;
+            -webkit-appearance: none;
+        }
+        input:focus {
+            border-color: var(--accent);
+            outline: none;
+            background-color: white;
+        }
+        .btn {
+            width: 100%;
+            padding: 16px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+        .btn-primary {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+        }
+        .btn-secondary {
+            background-color: #e9ecef;
+            color: var(--dark);
+        }
+        .info-card {
+            margin: 15px 0;
+            padding: 20px;
+            background: var(--light);
+            border-radius: 12px;
+            text-align: center;
+        }
+        .balance {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--gold);
+            margin: 10px 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: auto;
+            padding-top: 20px;
+        }
+        .success-icon {
+            font-size: 4rem;
+            color: var(--success);
+            margin-bottom: 15px;
+        }
+        .success-message {
+            text-align: center;
+            margin: auto;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Registration Screen -->
+        <div id="register-screen" class="active screen">
+            <div class="header">
+                <h2><i class="fas fa-wallet icon"></i>Create Account</h2>
+            </div>
+            <div class="content">
+                <input type="text" id="user-name" placeholder="Your Name">
+                <input type="password" id="user-pin" placeholder="5-digit PIN" maxlength="5" inputmode="numeric">
+                <button class="btn btn-primary" onclick="registerAccount()">
+                    <i class="fas fa-user-plus icon"></i>Create Account
+                </button>
+            </div>
+        </div>
+
+        <!-- Home Screen -->
+        <div id="home-screen" class="screen">
+            <div class="header">
+                <h2><i class="fas fa-coins icon"></i>Star Coins</h2>
+            </div>
+            <div class="content">
+                <div class="info-card">
+                    <i class="fas fa-id-card icon"></i>
+                    <div style="margin-top: 8px; font-size: 0.9rem;">Your ID:</div>
+                    <div id="user-id" style="font-weight:600; font-size: 1.1rem; word-break: break-all;"></div>
+                </div>
+                <div style="text-align: center; margin: 20px 0;">
+                    <div class="balance">0</div>
+                    <div>Available Balance</div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="showTransferScreen()">
+                        <i class="fas fa-exchange-alt icon"></i>Transfer
+                    </button>
+                    <button class="btn btn-secondary" onclick="showBuyScreen()">
+                        <i class="fas fa-shopping-cart icon"></i>Buy/Sell
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transfer Screen -->
+        <div id="transfer-screen" class="screen">
+            <div class="header">
+                <button class="back-btn" onclick="backToHome()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h2><i class="fas fa-exchange-alt icon"></i>Transfer</h2>
+            </div>
+            <div class="content">
+                <input type="text" id="receiver-id" placeholder="Receiver ID">
+                <input type="number" id="transfer-amount" placeholder="Amount" inputmode="decimal">
+                <div id="receiver-info" class="info-card" style="display:none;">
+                    <i class="fas fa-user-check icon"></i>
+                    <div style="margin-top: 8px;">Receiver: <span id="receiver-name" style="font-weight:600;"></span></div>
+                </div>
+                <button class="btn btn-primary" onclick="verifyReceiver()">
+                    <i class="fas fa-arrow-right icon"></i>Continue
+                </button>
+                <button class="btn btn-secondary" onclick="backToHome()">
+                    <i class="fas fa-times icon"></i>Cancel
+                </button>
+            </div>
+        </div>
+
+        <!-- PIN Screen -->
+        <div id="pin-screen" class="screen">
+            <div class="header">
+                <button class="back-btn" onclick="backToTransfer()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h2><i class="fas fa-lock icon"></i>Confirm</h2>
+            </div>
+            <div class="content">
+                <div class="info-card">
+                    <i class="fas fa-user-tag icon"></i>
+                    <div style="margin-top: 8px;">To: <span id="confirm-receiver" style="font-weight:600;"></span></div>
+                    <i class="fas fa-coins icon"></i>
+                    <div style="margin-top: 8px;">Amount: <span id="confirm-amount" style="font-weight:600;"></span></div>
+                </div>
+                <input type="password" id="confirm-pin" placeholder="Enter your PIN" maxlength="5" inputmode="numeric">
+                <button class="btn btn-primary" onclick="completeTransfer()">
+                    <i class="fas fa-paper-plane icon"></i>Confirm Transfer
+                </button>
+                <button class="btn btn-secondary" onclick="backToTransfer()">
+                    <i class="fas fa-arrow-left icon"></i>Back
+                </button>
+            </div>
+        </div>
+
+        <!-- Success Screen -->
+        <div id="success-screen" class="screen">
+            <div class="header">
+                <h2><i class="fas fa-check-circle icon"></i>Success</h2>
+            </div>
+            <div class="content">
+                <div class="success-message">
+                    <i class="fas fa-check-circle success-icon"></i>
+                    <h3>Transfer Successful!</h3>
+                    <div>Sent <span id="sent-amount" style="font-weight:600;"></span> to</div>
+                    <div><span id="sent-to" style="font-weight:600;"></span></div>
+                </div>
+                <button class="btn btn-primary" onclick="backToHome()">
+                    <i class="fas fa-home icon"></i>Back to Home
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+<script>
+  // Firebase Config
+  const firebaseConfig = {
+    apiKey: "AIzaSyDOxtdux0hLUfmmFs2RYrU13VU0gX7vd_U",
+    authDomain: "star-payment.firebaseapp.com",
+    databaseURL: "https://star-payment-default-rtdb.firebaseio.com",
+    projectId: "star-payment",
+    storageBucket: "star-payment.appspot.com",
+    messagingSenderId: "996369221516",
+    appId: "1:996369221516:web:c833bf87f2f6d9826db8a9"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // Remove local `users` data
+  let currentUser = null;
+  let currentTransfer = {};
+
+  // Screen navigation
+  function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+    if (screenId === 'home-screen' && currentUser) {
+      document.querySelector('#home-screen .balance').textContent = currentUser.balance;
+    }
+  }
+
+  // Registration (save to Firebase)
+  function registerAccount() {
+    const name = document.getElementById('user-name').value.trim();
+    const pin = document.getElementById('user-pin').value;
+
+    if (!name || !pin || pin.length !== 5 || isNaN(pin)) {
+      alert("Please enter your name and a valid 5-digit PIN");
+      return;
+    }
+
+    const userId = 'ID' + Math.floor(100000 + Math.random() * 900000);
+    currentUser = { id: userId, name, pin, balance: 1000 };
+
+    db.ref('users/' + userId).set(currentUser)
+      .then(() => {
+        document.getElementById('user-id').textContent = userId;
+        listenUserBalance(userId);
+        showScreen('home-screen');
+      })
+      .catch(err => alert("Error: " + err.message));
+  }
+
+  // Listen for balance changes
+  function listenUserBalance(userId) {
+    db.ref('users/' + userId + '/balance').on('value', snap => {
+      if (snap.exists()) {
+        currentUser.balance = snap.val();
+        document.querySelector('#home-screen .balance').textContent = currentUser.balance;
+      }
+    });
+  }
+
+  // Transfer functions
+  function showTransferScreen() { showScreen('transfer-screen'); }
+  function backToHome() { showScreen('home-screen'); }
+  function backToTransfer() { showScreen('transfer-screen'); }
+
+  function verifyReceiver() {
+    const receiverId = document.getElementById('receiver-id').value.trim();
+    const amount = parseInt(document.getElementById('transfer-amount').value);
+
+    if (!receiverId || !amount) {
+      alert("Please enter receiver ID and amount");
+      return;
+    }
+    if (receiverId === currentUser.id) {
+      alert("You cannot transfer to yourself");
+      return;
+    }
+    if (amount <= 0) {
+      alert("Amount must be positive");
+      return;
+    }
+
+    db.ref('users/' + receiverId).once('value').then(snap => {
+      if (!snap.exists()) {
+        alert("Receiver ID not found");
+        return;
+      }
+      const rData = snap.val();
+      currentTransfer = { receiverId, receiverName: rData.name, amount };
+      document.getElementById('receiver-name').textContent = rData.name;
+      document.getElementById('receiver-info').style.display = 'block';
+      document.getElementById('confirm-receiver').textContent = rData.name;
+      document.getElementById('confirm-amount').textContent = amount;
+      showScreen('pin-screen');
+    });
+  }
+
+  function completeTransfer() {
+    const pin = document.getElementById('confirm-pin').value;
+    if (pin !== currentUser.pin) {
+      alert("Incorrect PIN");
+      return;
+    }
+
+    const senderRef = db.ref('users/' + currentUser.id + '/balance');
+    const receiverRef = db.ref('users/' + currentTransfer.receiverId + '/balance');
+
+    senderRef.transaction(curr => {
+      if (curr === null) return;
+      if (curr >= currentTransfer.amount) {
+        return curr - currentTransfer.amount;
+      }
+      return;
+    }, (error, committed) => {
+      if (error) {
+        alert("Error: " + error.message);
+      } else if (!committed) {
+        alert("Insufficient balance");
+      } else {
+        receiverRef.transaction(curr => (curr || 0) + currentTransfer.amount, err2 => {
+          if (err2) {
+            alert("Error updating receiver balance");
+          } else {
+            document.getElementById('sent-amount').textContent = currentTransfer.amount;
+            document.getElementById('sent-to').textContent = currentTransfer.receiverName;
+            showScreen('success-screen');
+          }
+        });
+      }
+    });
+  }
+
+  function showBuyScreen() {
+    alert("Buy/Sell feature coming soon!");
+  }
+</script>
+</body>
+</html>
