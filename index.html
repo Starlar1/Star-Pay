@@ -1,0 +1,2308 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><meta name='viewport' content='width=device-width, initial-scale=1'/><meta name='viewport' content='width=device-width, initial-scale=1'/><meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html>
+<head>
+    <title>Star Coins Wallet</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        :root {
+            --primary: #FFA500;
+            --secondary: #FF8C00;
+            --accent: #FFD700;
+            --success: #FFD700;
+            --danger: #FF4500;
+            --gold: #FFD700;
+            --light: #FFF8DC;
+            --dark: #8B4513;
+        }
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #FFF8DC;
+            color: var(--dark);
+            touch-action: manipulation;
+        }
+        .app-container {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        .screen {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            position: relative;
+        }
+        .active {
+            display: flex;
+        }
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .top-icon {
+            font-size: 1.2rem;
+            position: relative;
+            color: white;
+        }
+        .badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .balance-section {
+    padding: 30px 20px;
+    text-align: center;
+    background: linear-gradient(to bottom, var(--primary), var(--secondary));
+    color: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.balance {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: white !important; /* Changed from var(--gold) to white */
+    margin: 10px 0;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 20px;
+            align-items: center;
+        }
+        .btn {
+            padding: 18px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 300px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+        .btn-primary {
+            background: white;
+            color: var(--secondary);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .btn-secondary {
+            background-color: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+        }
+        .bottom-nav {
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 0;
+            background-color: white;
+            border-top: 1px solid #e0e0e0;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            max-width: 400px;
+            z-index: 100;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.8rem;
+            color: #666;
+            cursor: pointer;
+            width: 33.33%;
+            text-align: center;
+        }
+        .nav-icon {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+        .active-nav {
+            color: var(--primary);
+        }
+        .content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            padding-bottom: 70px;
+        }
+        .header {
+            padding: 15px;
+            text-align: center;
+            position: relative;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .back-btn {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            background-color: #f9f9f9;
+        }
+        input:focus, textarea:focus {
+            border-color: var(--accent);
+            outline: none;
+            background-color: white;
+            box-shadow: 0 0 0 2px rgba(255,215,0,0.3);
+        }
+        .info-card {
+            margin: 15px 0;
+            padding: 20px;
+            background: var(--light);
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .message-item {
+            padding: 15px;
+            margin: 10px 0;
+            background: #f0f0f0;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary);
+        }
+        .message-sender {
+            font-weight: bold;
+            color: var(--secondary);
+        }
+        .message-time {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 5px;
+        }
+        .success-icon {
+            font-size: 4rem;
+            color: var(--success);
+            margin-bottom: 15px;
+        }
+        .success-message {
+            text-align: center;
+            margin: auto;
+            padding: 20px;
+        }
+        .register-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 20px;
+            background: linear-gradient(to bottom, var(--primary), var(--secondary));
+            color: white;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1000;
+        }
+        .register-form {
+            width: 100%;
+            max-width: 300px;
+        }
+        .register-header {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .register-header i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: white;
+        }
+        .register-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: white;
+        }
+        .transfer-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 1000;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            z-index: 999;
+        }
+        .overlay.active {
+            display: block;
+        }
+        .action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 140px;
+            height: 140px;
+            border-radius: 20px;
+            background: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin: 10px;
+            transition: all 0.2s;
+        }
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+        .action-btn i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: var(--secondary);
+        }
+        .action-btn span {
+            font-weight: 500;
+            color: var(--dark);
+        }
+        .actions-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .transfer-form {
+            padding: 20px;
+        }
+        .transfer-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .transfer-actions .btn {
+            flex: 1;
+        }
+        .btn-with-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .pin-form-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        .message-form-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        /* Larger profile circle */
+        .account-profile-circle {
+            font-size: 4rem !important;
+            width: 120px;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: #FFD700;
+            color: white;
+            margin: 0 auto 15px auto;
+        }
+        
+/* Diamond screen grid layout */
+.diamond-grid, 
+.bonus-diamond-grid, 
+.pass-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* တန်းလျှင် ၂ ခု */
+    gap: 12px; /* ကတ်အကြား spacing */
+    padding: 10px;
+}
+
+/* Diamond package card */
+.diamond-package {
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 1px solid #eee;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column; /* Icon → Count → Price */
+    align-items: center;
+    justify-content: center;
+}
+
+.diamond-package:active {
+    transform: scale(0.98);
+}
+
+/* Diamond icon */
+.diamond-package i {
+    font-size: 2rem;
+    color: var(--primary);
+    margin-bottom: 8px;
+}
+
+/* Diamond count text */
+.diamond-package .diamond-count {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--primary);
+    margin-bottom: 5px;
+}
+
+/* Coins price text */
+.diamond-package .coin-price {
+    font-size: 1rem;
+    color: var(--dark);
+}
+
+/* Bonus text for 2X Diamonds */
+.diamond-package .bonus-text {
+    font-size: 0.8rem;
+    color: var(--danger);
+    margin-top: 5px;
+}
+
+/* Profile Circle */
+.account-profile-circle.rank-profile {
+    width: 40px; 
+    height: 40px;
+    font-size: 0.6rem; /* Circle ထဲက စာလုံး သေး */
+    border-radius: 50%;
+    background-color: #FFD700;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+/* Rank Row */
+.rank-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: white;
+    padding: 6px 10px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.rank-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.rank-number {
+    font-weight: bold;
+    font-size: 0.8rem;
+    width: 24px;
+    text-align: center;
+}
+
+.rank-name {
+    font-weight: bold;
+    font-size: 0.85rem; /* နည်းနည်းကြီး */
+    line-height: 1.2;
+}
+
+.rank-id {
+    font-size: 0.75rem; /* နည်းနည်းကြီး */
+    color: gray;
+}
+
+.rank-coins {
+    font-weight: bold;
+    font-size: 0.85rem; /* နည်းနည်းကြီး */
+}
+
+/* Rank highlight animation */
+.rank-1 {
+    background: linear-gradient(270deg, gold, orange, gold);
+    background-size: 400% 400%;
+    animation: gradientMove 3s ease infinite;
+    color: white;
+}
+.rank-2 {
+    background: linear-gradient(270deg, silver, #d9d9d9, silver);
+    background-size: 400% 400%;
+    animation: gradientMove 3s ease infinite;
+    color: white;
+}
+.rank-3 {
+    background: linear-gradient(270deg, #cd7f32, #b87333, #cd7f32);
+    background-size: 400% 400%;
+    animation: gradientMove 3s ease infinite;
+    color: white;
+}
+
+@keyframes gradientMove {
+    0% {background-position: 0% 50%;}
+    50% {background-position: 100% 50%;}
+    100% {background-position: 0% 50%;}
+}
+
+.blue-mark-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #1DA1F2;
+    margin-left: 6px;
+    animation: bluePulse 1.5s infinite ease-in-out;
+    box-shadow: 0 0 5px rgba(29,161,242,0.7);
+    cursor: pointer;
+}
+
+.blue-mark-badge svg {
+    width: 12px;
+    height: 12px;
+    fill: white;
+}
+
+@keyframes bluePulse {
+    0%   { background-color: #1DA1F2; box-shadow: 0 0 5px rgba(29,161,242,0.7); }
+    50%  { background-color: #00bfff; box-shadow: 0 0 10px rgba(0,191,255,0.9); }
+    100% { background-color: #1DA1F2; box-shadow: 0 0 5px rgba(29,161,242,0.7); }
+}
+
+/* Tooltip bubble */
+.blue-mark-tooltip {
+    position: absolute;
+    bottom: 125%; /* Above the badge */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #1DA1F2;
+    color: white;
+    padding: 5px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.blue-mark-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%; /* Arrow pointing down */
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: #1DA1F2 transparent transparent transparent;
+}
+
+.blue-mark-badge.show-tooltip .blue-mark-tooltip {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.admin-btn i {
+    opacity: 0; /* မမြင်ရ */
+}
+
+
+/* CSS for the new gift circle button */
+.gift-circle-btn {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #FF69B4, #FF1493);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+  box-shadow: 0 4px 12px rgba(255, 105, 180, 0.3);
+  cursor: pointer;
+  z-index: 101;
+  animation: pulse 2s infinite;
+}
+
+.gift-circle-btn:hover {
+  transform: scale(1.1);
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Registration Screen -->
+        <div id="register-screen" class="active screen">
+            <div class="register-container">
+                <div class="register-header">
+                    <i class="fas fa-wallet"></i>
+                    <h2>အကောင့်ဖွင့်ရန်</h2>
+                </div>
+                <div class="register-form">
+                    <input type="text" id="user-name" placeholder="သင့်နာမည်" style="background: rgba(255,255,255,0.9);">
+                    <input type="password" id="user-pin" placeholder="PIN နံပါတ် (၅) လုံး" maxlength="5" inputmode="numeric" style="background: rgba(255,255,255,0.9);">
+                    <button class="btn btn-primary" onclick="registerAccount()" style="margin-top: 30px; background: white; color: var(--secondary); font-weight: bold;">
+                        <i class="fas fa-user-plus icon"></i> အကောင့်ဖွင့်မည်
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Home Screen -->
+        <div id="home-screen" class="screen">
+<!-- Top Icons -->
+<div class="top-bar">
+    <!-- Mailbox + Admin group -->
+    <div style="display:flex; align-items:center; gap:15px;">
+        <!-- Mailbox -->
+        <div class="top-icon" onclick="showMailboxScreen()">
+            <i class="fas fa-envelope"></i>
+            <span class="badge" id="unread-count" style="display: none;">0</span>
+        </div>
+
+        <!-- Admin -->
+        <div class="top-icon admin-btn" onclick="showAdminLogin()">
+            <i class="fas fa-user-shield"></i>
+        </div>
+    </div>
+
+    <!-- Telegram + Party group -->
+    <div style="display:flex; align-items:center; gap:10px;">
+        <!-- Telegram -->
+        <div class="top-icon" onclick="showMessageScreen()">
+            <i class="fas fa-paper-plane"></i>
+        </div>
+
+        <!-- Party Gift -->
+ <!-- Party Gift -->
+<div class="top-icon" onclick="showPartyPasswordScreen()">
+    <i class="fas fa-champagne-glasses"></i>
+</div>
+    </div>
+</div>
+
+
+            <!-- Balance Section -->
+            <div class="balance-section">
+                <div>လက်ကျန် Coins </div>
+                <div class="balance" id="home-balance">0</div>
+                <div>Star Coins</div>
+            </div>
+            
+      <!-- Home Screen ရှိ Action Buttons ကိုပြင်ဆင်ပါမည် -->
+<!-- Add this in the home-screen div, below the existing action buttons -->
+<div class="actions-container" style="margin-top: 20px;">
+    <div class="action-btn" onclick="showDiamondScreen()">
+        <i class="fas fa-gem"></i>
+        <span>Diamond Buy</span>
+    </div>
+    <div class="action-btn" onclick="showBuyScreen()">
+        <i class="fas fa-coins"></i> <!-- မူလ Icon အတိုင်းထားခြင်း -->
+        <span>ဘေရောင်းမည်</span> <!-- မူလစာသားအတိုင်းထားခြင်း -->
+    </div>
+</div>
+
+            
+<!-- Add these new action buttons below the existing ones in home-screen -->
+<div class="actions-container" style="margin-top: 20px;">
+    <div class="action-btn" onclick="showGenerateCodeScreen()">
+        <i class="fas fa-qrcode"></i>
+        <span>Code ထုတ်မည်</span>
+    </div>
+    <div class="action-btn" onclick="showRedeemCodeScreen()">
+        <i class="fas fa-gift"></i>
+        <span>Gift Code ထည့်</span>
+    </div>
+</div>
+</div>
+
+<div class="gift-circle-btn" onclick="showGiftCenter()">
+  <i class="fas fa-gift"></i>
+</div>
+
+<!-- Buy Screen -->
+<div id="buy-screen" class="screen">
+    <div class="header">
+        <button class="back-btn" onclick="backToHome()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h2><i class="fas fa-coins icon"></i>ဘေရောင်းမည်</h2>
+    </div>
+    <div class="content">
+        <div class="info-card">
+            <i class="fas fa-mobile-alt" style="font-size: 2rem; color: var(--gold);"></i>
+            <div style="margin-top: 15px;">သင့်ဖုန်းဘေကတ်မှ နံပါတ်ကိုထည့်ပါ
+            1000 တန် Card သာလက်ခံပါသည်</div>
+        </div>
+        <div style="padding: 20px;">
+            <select id="card-type" style="width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #e0e0e0; border-radius: 12px; font-size: 1rem; background-color: #f9f9f9;">
+                <option value="">ဘေကတ်အမျိုးအစားရွေးပါ</option>
+                <option value="Mytel">Mytel</option>
+                <option value="MPT">MPT</option>
+                <option value="ATOM">ATOM</option>
+                <option value="OOREDOO">OOREDOO</option>
+            </select>
+
+            <input type="text" id="phone-number" placeholder="ဘေကတ်မှာပါသော နံပါတ်များထည့်ပါ" inputmode="tel">
+
+<!-- Hidden File Input -->
+<input type="file" id="card-image" accept="image/*" style="display: none;" onchange="showSelectedImage(event)">
+
+<!-- Styled Box acting like input -->
+<div id="upload-box" onclick="document.getElementById('card-image').click()" 
+     style="width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #e0e0e0; 
+            border-radius: 12px; font-size: 1rem; background-color: #f9f9f9; 
+            color: gray; cursor: pointer; text-align: left;">
+     ဘေလ်ကတ်ဓာတ်ပုံထည့်ရန်နှိပ်ပါ
+</div>
+
+<!-- Preview -->
+<div id="image-preview" style="margin-top: 10px; display: none; text-align: center;">
+    <img id="preview-img" src="" style="max-width: 100%; border-radius: 10px;">
+</div>
+
+            <button class="btn btn-primary btn-with-icon" onclick="verifyPhoneNumber()" style="margin-top: 15px;">
+                <i class="fas fa-check"></i>ပေးပို့မည်
+            </button>
+        </div>
+    </div>
+</div>
+<!-- Generate Code Screen -->
+<div id="generate-code-screen" class="screen">
+    <div class="header">
+        <button class="back-btn" onclick="backToHome()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h2><i class="fas fa-qrcode icon"></i>Code ထုတ်မည်</h2>
+    </div>
+    <div class="content">
+        <div class="info-card">
+            <i class="fas fa-coins" style="font-size: 2rem; color: var(--gold);"></i>
+            <div style="margin-top: 15px;">သင့်လက်ကျန် Coins: <span id="current-balance" style="font-weight:600;"></span> Star Coins</div>
+        </div>
+        <div style="padding: 20px;">
+            <input type="number" id="code-amount" placeholder="Star Coins ပမာဏ" inputmode="decimal">
+            <button class="btn btn-primary btn-with-icon" onclick="verifyCodeAmount()" style="margin-top: 15px;">
+                <i class="fas fa-check"></i>အတည်ပြုမည်
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Generate Code PIN Screen -->
+<div id="generate-code-pin-screen" class="screen">
+    <div class="header">
+        <button class="back-btn" onclick="backToGenerateCode()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h2><i class="fas fa-lock icon"></i>PIN အတည်ပြုရန်</h2>
+    </div>
+    <div class="content">
+        <div class="info-card">
+            <i class="fas fa-coins icon"></i>
+            <div style="margin-top: 8px;">ပမာဏ: <span id="code-amount-confirm" style="font-weight:600;"></span> Star Coins</div>
+        </div>
+        <div class="pin-form-container">
+            <input type="password" id="generate-code-pin" placeholder="သင့် PIN နံပါတ်ထည့်ပါ" maxlength="5" inputmode="numeric">
+            <button class="btn btn-primary btn-with-icon" onclick="generateGiftCode()" style="margin-top: 15px;">
+                <i class="fas fa-qrcode"></i>Code ထုတ်မည်
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Code Generated Success Screen -->
+<div id="code-generated-screen" class="screen">
+    <div class="header">
+        <h2><i class="fas fa-check-circle icon"></i>Code ထုတ်ပြီး</h2>
+    </div>
+    <div class="content">
+        <div class="success-message">
+            <i class="fas fa-qrcode success-icon"></i>
+            <h3>Gift Code ထုတ်ပြီးပါပြီ!</h3>
+            <div style="margin: 20px 0; font-size: 1.2rem; background: var(--light); padding: 15px; border-radius: 10px;">
+                <strong id="generated-code"></strong>
+            </div>
+            <div>ပမာဏ: <span id="code-amount-display" style="font-weight:600;"></span> Star Coins</div>
+        </div>
+        <div style="display: flex; justify-content: center;">
+            <button class="btn btn-primary btn-with-icon" onclick="backToHome()" style="width: 100%; max-width: 300px;">
+                <i class="fas fa-home"></i>Home
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Redeem Code Screen -->
+<div id="redeem-code-screen" class="screen">
+    <div class="header">
+        <button class="back-btn" onclick="backToHome()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h2><i class="fas fa-gift icon"></i>Gift Code ထည့်မည်</h2>
+    </div>
+    <div class="content">
+        <div style="padding: 20px;">
+            <input type="text" id="gift-code-input" placeholder="Gift Code ထည့်ပါ">
+            <button class="btn btn-primary btn-with-icon" onclick="redeemGiftCode()" style="margin-top: 15px;">
+                <i class="fas fa-gift"></i>Code ထည့်မည်
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Diamond Purchase Screen -->
+<div id="diamond-screen" class="screen">
+    <div class="header">
+        <button class="back-btn" onclick="backToHome()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h2><i class="fas fa-gem icon"></i>Diamond ဝယ်မည်</h2>
+    </div>
+    <div class="content">
+        <div class="info-card">
+            <i class="fas fa-gem" style="font-size: 2rem; color: var(--gold);"></i>
+            <div style="margin-top: 15px;">သင့်လက်ကျန် Coins: <span id="diamond-balance" style="font-weight:600;"></span> Star Coins</div>
+        </div>
+        
+        <h3 style="text-align: center; margin: 20px 0 10px 0;">Diamond များ</h3>
+        <div class="diamond-grid">
+            <!-- Diamond packages will be added here by JavaScript -->
+        </div>
+        
+        <h3 style="text-align: center; margin: 20px 0 10px 0;">2X Diamond များ</h3>
+        <div class="bonus-diamond-grid">
+            <!-- Bonus diamond packages will be added here by JavaScript -->
+        </div>
+        
+        <h3 style="text-align: center; margin: 20px 0 10px 0;">Pass များ</h3>
+        <div class="pass-grid">
+            <!-- Pass packages will be added here by JavaScript -->
+        </div>
+    </div>
+</div>
+
+<!-- Diamond Order Screen -->
+<div id="diamond-order-screen" class="screen">
+    <div class="header">
+        <button class="back-btn" onclick="showDiamondScreen()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h2><i class="fas fa-gem icon"></i> Diamond Order</h2>
+    </div>
+    <div class="content" style="padding: 20px;">
+        <div class="info-card" style="text-align:center;">
+            <i class="fas fa-gem" style="font-size: 2rem; color: var(--gold);"></i>
+            <div id="order-package" style="margin-top: 10px; font-weight: bold;"></div>
+        </div>
+        <input type="text" id="game-id" placeholder="Game ID ထည့်ပါ">
+        <input type="text" id="server-id" placeholder="Server ID ထည့်ပါ">
+        <input type="text" id="gift-code" placeholder="Gift Code ထည့်ပါ">
+        <div style="display: flex; justify-content: center; margin-top: 15px;">
+            <button class="btn btn-primary btn-with-icon" onclick="sendDiamondOrder()">
+                <i class="fas fa-paper-plane"></i> ပေးပို့မည်
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- FAQ Screen -->
+<div id="faq-screen" class="screen">
+    <div class="header">
+        <button class="back-btn" onclick="backToHome()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h2><i class="fas fa-info-circle icon"></i>FAQ</h2>
+    </div>
+    <div class="content">
+        <div class="info-card">
+            <h3>ဖုန်းဘေနဲ့ Diamond ၀ယ်နည်း</h3>
+            <p>အောက်ပါ ဗီဒီယိုကို ကြည့်ပါ --</p>
+        </div>
+        <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;">
+            <iframe src="https://www.youtube.com/embed/GJSKZGL4htY?si=_XG_ONKLAlFTUQsl"
+                frameborder="0" allowfullscreen
+                style="position:absolute;top:0;left:0;width:100%;height:100%;">
+            </iframe>
+        </div>
+    </div>
+</div>
+
+<div id="account-screen" class="screen">
+    <div class="header">
+        <button class="back-btn" onclick="backToHome()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h2><i class="fas fa-user icon"></i>Account</h2>
+    </div>
+    <div class="content" style="text-align:center;">
+        <div id="profile-circle" class="account-profile-circle"></div>
+        <h3 id="account-name"></h3>
+        <p>ID: <span id="account-id"></span></p>
+        <div style="display:flex; justify-content:center; margin-top:15px;">
+            <button class="btn btn-primary btn-with-icon" onclick="editProfile()">
+                <i class="fas fa-edit"></i> Edit Profile
+            </button>
+        </div>
+        <input type="file" id="profile-image-input" accept="image/*" style="display:none" onchange="uploadProfileImage(event)">
+    </div>
+</div>
+        <!-- Message Screen -->
+        <div id="message-screen" class="screen">
+            <div class="header">
+                <button class="back-btn" onclick="backToHome()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h2><i class="fas fa-paper-plane icon"></i>Mailပို့ရန်</h2>
+            </div>
+            <div class="content">
+                <div class="message-form-container">
+                    <input type="text" id="recipient-id" placeholder="ပို့မည့်သူအိုင်ဒီ" style="width: 100%; max-width: 300px;">
+                    <textarea id="message-text" placeholder="စာကိုရေးပါ" rows="4" style="width: 100%; max-width: 300px;"></textarea>
+                    <button class="btn btn-primary btn-with-icon" onclick="sendMessage()" style="width: 100%; max-width: 300px;">
+                        <i class="fas fa-paper-plane"></i>Mailပို့မည်
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mailbox Screen -->
+        <div id="mailbox-screen" class="screen">
+            <div class="header">
+                <button class="back-btn" onclick="backToHome()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h2><i class="fas fa-envelope icon"></i>စာအိတ်</h2>
+            </div>
+            <div class="content">
+                <div id="messages-container">
+                    <!-- Messages will appear here -->
+                </div>
+            </div>
+        </div>
+
+<!-- Gift Party Screen -->
+<div id="gift-party-screen" class="screen">
+    <div class="header">
+        <button class="back-btn" onclick="backToHome()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h2><i class="fas fa-champagne-glasses"></i> Party Gift</h2>
+    </div>
+    <div class="content" style="padding:20px; text-align:center;">
+        <input type="text" id="party-gift-code" placeholder="Gift Code ထည့်ပါ">
+        
+        <button 
+            class="btn btn-primary btn-with-icon" 
+            onclick="savePartyGiftCode()" 
+            style="display:block; margin:15px auto 0;"
+        >
+            <i class="fas fa-gift"></i> ပေးမည်
+        </button>
+    </div>
+</div>
+
+<!-- Party Gift Password Screen -->
+<div id="party-password-screen" class="screen">
+  <div class="header">
+    <button class="back-btn" onclick="backToHome()">
+      <i class="fas fa-arrow-left"></i>
+    </button>
+    <h2><i class="fas fa-lock"></i> Party Gift Login</h2>
+  </div>
+
+  <div class="content" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; height:100%;">
+    <input 
+      type="password" 
+      id="party-password" 
+      placeholder="Password ထည့်ပါ" 
+      style="max-width:300px; width:100%; padding:12px; border-radius:10px; text-align:center; margin-bottom:20px; font-size:1rem;"
+    >
+    <button 
+      class="btn btn-primary btn-with-icon" 
+      onclick="checkPartyPassword()" 
+      style="max-width:300px; width:100%; justify-content:center;"
+    >
+      <i class="fas fa-check"></i> Login
+    </button>
+  </div>
+</div>
+
+
+<!-- Admin Login Screen -->
+<div id="admin-login-screen" class="screen">
+    <div class="header">
+        <button class="back-btn" onclick="backToHome()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h2><i class="fas fa-user-shield"></i> Admin Login</h2>
+    </div>
+    <div class="content" style="text-align:center; padding:20px;">
+        <input type="password" id="admin-password" placeholder="Admin Password" style="max-width:300px; margin:20px auto;">
+        <button class="btn btn-primary btn-with-icon" onclick="checkAdminPassword()" style="max-width:300px; margin-top:15px;">
+            <i class="fas fa-lock"></i> Login
+        </button>
+    </div>
+</div>
+
+<!-- Admin Panel Screen -->
+<div id="admin-panel-screen" class="screen">
+    <div class="header">
+        <button class="back-btn" onclick="backToHome()"><i class="fas fa-arrow-left"></i></button>
+        <h2><i class="fas fa-tools"></i> Admin Panel</h2>
+    </div>
+    <div class="content" style="padding:20px;">
+        <button class="btn btn-primary btn-with-icon" onclick="showRankEditScreen()" style="margin-bottom:10px;">
+            <i class="fas fa-trophy"></i> Rank Edit
+        </button>
+        <button class="btn btn-primary btn-with-icon" onclick="showUserBanScreen()" style="margin-bottom:10px;">
+            <i class="fas fa-user-slash"></i> User Ban
+        </button>
+        <button class="btn btn-primary btn-with-icon" onclick="showBlueMarkScreen()" style="margin-bottom:10px;">
+            <i class="fas fa-check-circle"></i> Blue Mark
+        </button>
+    </div>
+</div>
+
+<!-- Update the history-screen div in the HTML -->
+<div id="history-screen" class="screen">
+    <div class="header">
+        <button class="back-btn" onclick="backToHome()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h2><i class="fas fa-history icon"></i>မှတ်တန်း</h2>
+    </div>
+    <div class="content">
+        <div id="history-container">
+            <!-- Transactions will be loaded here -->
+        </div>
+    </div>
+</div>
+
+
+
+
+        <!-- Bottom Navigation (hidden during registration) -->
+        <div class="bottom-nav" id="bottom-nav" style="display: none;">
+            <div class="nav-item" onclick="showHomeScreen()">
+                <i class="fas fa-home nav-icon"></i>
+                <div>Home</div>
+            </div>
+            <div class="nav-item" onclick="showHistoryScreen()">
+                <i class="fas fa-history nav-icon"></i>
+                <div>History</div>
+            </div>
+<div class="nav-item" onclick="showFAQScreen()">
+    <i class="fas fa-question-circle nav-icon"></i>
+    <div>FAQ</div>
+</div>
+
+     <div class="nav-item" onclick="showAccountScreen()">
+    <i class="fas fa-user nav-icon"></i>
+    <div>Account</div>
+</div>
+        </div>
+    </div>
+
+
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyD0xtdux0hLUfmmFs2RYrU13VU0gX7vd_U",
+            authDomain: "star-payment.firebaseapp.com",
+            databaseURL: "https://star-payment-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "star-payment",
+            storageBucket: "star-payment.appspot.com",
+            messagingSenderId: "996369221516",
+            appId: "1:996369221516:web:c833bf87f2f6d9826db8a9",
+            measurementId: "G-ZYLY"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Database
+        let users = {
+            "55555555": { name: "Starlar", pin: "12345", balance: 0 },
+            "11111111": { name: "Mg Starlar", pin: "54321", balance: 0 }
+        };
+        
+        let currentUser = null;
+        let currentTransfer = {};
+        let unreadMessages = 0;
+
+        // Screen navigation
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            
+            // Update navigation active state
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active-nav'));
+            
+            if (screenId === 'home-screen') {
+                document.querySelectorAll('.nav-item')[0].classList.add('active-nav');
+                document.getElementById('bottom-nav').style.display = 'flex';
+            } else if (screenId === 'history-screen') {
+                document.querySelectorAll('.nav-item')[1].classList.add('active-nav');
+                document.getElementById('bottom-nav').style.display = 'flex';
+            } else if (screenId === 'account-screen') {
+                document.querySelectorAll('.nav-item')[2].classList.add('active-nav');
+                document.getElementById('bottom-nav').style.display = 'flex';
+            } else if (screenId === 'register-screen') {
+                document.getElementById('bottom-nav').style.display = 'none';
+            }
+            
+            // Update balance on home screen
+            if (screenId === 'home-screen' && currentUser) {
+                document.getElementById('home-balance').textContent = currentUser.balance;
+            }
+            
+            // Load messages when mailbox is opened
+            if (screenId === 'mailbox-screen' && currentUser) {
+                loadMessages();
+            }
+            
+            // Update account info when account screen is opened
+            if (screenId === 'account-screen' && currentUser) {
+                document.getElementById('account-name').textContent = currentUser.name;
+                document.getElementById('account-id').textContent = currentUser.id;
+            }
+        }
+
+        function showHomeScreen() {
+            showScreen('home-screen');
+        }
+
+        // Registration
+        function registerAccount() {
+            const name = document.getElementById('user-name').value.trim();
+            const pin = document.getElementById('user-pin').value;
+            
+            if (!name || !pin || pin.length !== 5 || isNaN(pin)) {
+                alert("ကျေးဇူးပြု၍ နာမည်နှင့် PIN နံပါတ် (၅) လုံးကို မှန်ကန်စွာထည့်ပါ");
+                return;
+            }
+            
+            // Generate 8-digit ID (without "ID" prefix)
+            const userId = String(Math.floor(10000000 + Math.random() * 90000000));
+            
+            // Create new user
+            currentUser = {
+                id: userId,
+                name: name,
+                pin: pin,
+                balance: 0 // Starting balance for demo
+            };
+            
+            // Add to database
+            users[userId] = currentUser;
+            
+            // Save to Firebase
+            database.ref('users/' + userId).set({
+                name: name,
+                pin: pin,
+                balance: 0
+            });
+            
+            // Show home screen
+            showScreen('home-screen');
+            
+            // Start listening for messages
+            listenForMessages();
+        }
+
+        // Transfer functions
+        function showTransferScreen() {
+            document.getElementById('overlay').classList.add('active');
+            document.getElementById('transfer-screen').classList.add('active');
+        }
+        
+        function hideTransferScreen() {
+            document.getElementById('overlay').classList.remove('active');
+            document.getElementById('transfer-screen').classList.remove('active');
+        }
+        
+        function backToHome() {
+            showScreen('home-screen');
+        }
+        
+        function backToTransfer() {
+            showScreen('transfer-screen');
+        }
+        
+        function verifyReceiver() {
+            const receiverId = document.getElementById('receiver-id').value.trim();
+            const amount = parseInt(document.getElementById('transfer-amount').value);
+            
+            if (!receiverId || !amount) {
+                alert("ကျေးဇူးပြု၍ Coins လက်ခံသူအိုင်ဒီနှင့် Coins ပမာဏကိုထည့်ပါ");
+                return;
+            }
+            
+            if (!users[receiverId]) {
+                alert("Coins လက်ခံသူအိုင်ဒီ မတွေ့ပါ");
+                return;
+            }
+            
+            if (receiverId === currentUser.id) {
+                alert("သင့်ကိုယ်သင် Coins မလွှဲနိုင်ပါ");
+                return;
+            }
+            
+            if (amount <= 0) {
+                alert("Coins ပမာဏသည် အပြုသဘောဆောင်ရပါမည်");
+                return;
+            }
+            
+            currentTransfer = {
+                receiverId: receiverId,
+                receiverName: users[receiverId].name,
+                amount: amount
+            };
+            
+            document.getElementById('receiver-name').textContent = users[receiverId].name;
+            document.getElementById('receiver-info').style.display = 'block';
+            
+            document.getElementById('confirm-receiver').textContent = users[receiverId].name;
+            document.getElementById('confirm-amount').textContent = amount;
+            
+            hideTransferScreen();
+            showScreen('pin-screen');
+        }
+        
+        function completeTransfer() {
+            const pin = document.getElementById('confirm-pin').value;
+            
+            if (pin !== currentUser.pin) {
+                alert("PIN နံပါတ် မှားယွင်းနေပါသည်");
+                return;
+            }
+            
+            if (currentTransfer.amount > currentUser.balance) {
+                alert("လက်ကျန်Coins  မလုံလောက်ပါ");
+                return;
+            }
+            
+            // Process transfer
+            currentUser.balance -= currentTransfer.amount;
+            users[currentTransfer.receiverId].balance += currentTransfer.amount;
+            
+            // Update in Firebase
+            database.ref('users/' + currentUser.id).update({
+                balance: currentUser.balance
+            });
+            
+            database.ref('users/' + currentTransfer.receiverId).update({
+                balance: users[currentTransfer.receiverId].balance
+            });
+            
+            // Show success
+            document.getElementById('sent-amount').textContent = currentTransfer.amount;
+            document.getElementById('sent-to').textContent = currentTransfer.receiverName;
+            showScreen('success-screen');
+        }
+        
+        function showBuyScreen() {
+            alert("ဘေရောင်းခြင်း ဝန်ဆောင်မှုများ မကြာမီရရှိပါမည်!");
+        }
+        
+        function showHistoryScreen() {
+            showScreen('history-screen');
+        }
+        
+        
+        
+        // Messaging functions
+        function showMessageScreen() {
+            showScreen('message-screen');
+        }
+        
+        function showMailboxScreen() {
+            showScreen('mailbox-screen');
+        }
+        
+        function sendMessage() {
+            const recipientId = document.getElementById('recipient-id').value.trim();
+            const message = document.getElementById('message-text').value.trim();
+            
+            if (!recipientId || !message) {
+                alert("ကျေးဇူးပြု၍ လက်ခံသူအိုင်ဒီနှင့် စာကိုထည့်ပါ");
+                return;
+            }
+            
+            // Check if recipient exists
+            database.ref('users/' + recipientId).once('value')
+                .then(snapshot => {
+                    if (!snapshot.exists()) {
+                        alert("လက်ခံသူအိုင်ဒီ မတွေ့ပါ");
+                        return;
+                    }
+                    
+                    // Create message object
+                    const messageObj = {
+                        senderId: currentUser.id,
+                        senderName: currentUser.name,
+                        recipientId: recipientId,
+                        message: message,
+                        timestamp: firebase.database.ServerValue.TIMESTAMP,
+                        read: false
+                    };
+                    
+                    // Save to Firebase
+                    return database.ref('messages/' + recipientId).push(messageObj);
+                })
+                .then(() => {
+                    alert("စာပို့ပြီးပါပြီ");
+                    document.getElementById('recipient-id').value = "";
+                    document.getElementById('message-text').value = "";
+                    backToHome();
+                })
+                .catch(error => {
+                    alert("စာပို့ရာတွင် အမှားတစ်ခုဖြစ်နေပါသည်: " + error.message);
+                });
+        }
+        
+        function loadMessages() {
+            if (!currentUser) return;
+            
+            database.ref('messages/' + currentUser.id).orderByChild('timestamp').once('value')
+                .then(snapshot => {
+                    const messagesContainer = document.getElementById('messages-container');
+                    messagesContainer.innerHTML = "";
+                    
+                    if (!snapshot.exists()) {
+                        messagesContainer.innerHTML = "<div style='text-align: center; padding: 20px;'>မည်သည့်စာမှ မရှိသေးပါ</div>";
+                        return;
+                    }
+                    
+                    snapshot.forEach(childSnapshot => {
+                        const message = childSnapshot.val();
+                        const messageElement = document.createElement('div');
+                        messageElement.className = 'message-item';
+                        
+                        const time = new Date(message.timestamp);
+                        const timeString = time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + ' ' + time.toLocaleDateString();
+                        
+                        messageElement.innerHTML = `
+                            <div class="message-sender">${message.senderName} (${message.senderId})</div>
+                            <div>${message.message}</div>
+                            <div class="message-time">${timeString}</div>
+                        `;
+                        
+                        messagesContainer.prepend(messageElement);
+                        
+                        // Mark as read if unread
+                        if (!message.read) {
+                            database.ref('messages/' + currentUser.id + '/' + childSnapshot.key).update({
+                                read: true
+                            });
+                        }
+                    });
+                });
+        }
+        
+        function listenForMessages() {
+            if (!currentUser) return;
+            
+            database.ref('messages/' + currentUser.id).orderByChild('read').equalTo(false).on('value', snapshot => {
+                if (snapshot.exists()) {
+                    unreadMessages = snapshot.numChildren();
+                    const badge = document.getElementById('unread-count');
+                    badge.textContent = unreadMessages;
+                    badge.style.display = unreadMessages > 0 ? 'flex' : 'none';
+                } else {
+                    document.getElementById('unread-count').style.display = 'none';
+                }
+            });
+        }
+        
+// Gift Code functions (Firebase storage version)
+let currentCodeAmount = 0;
+
+function showGenerateCodeScreen() {
+    if (!currentUser) {
+        showScreen('register-screen');
+        return;
+    }
+    document.getElementById('current-balance').textContent = currentUser.balance;
+    showScreen('generate-code-screen');
+}
+
+function showRedeemCodeScreen() {
+    if (!currentUser) {
+        showScreen('register-screen');
+        return;
+    }
+    showScreen('redeem-code-screen');
+}
+
+function backToGenerateCode() {
+    showScreen('generate-code-screen');
+}
+
+function verifyCodeAmount() {
+    const amount = parseInt(document.getElementById('code-amount').value);
+
+    if (!amount || amount <= 0) {
+        alert("ကျေးဇူးပြု၍ မှန်ကန်သော ပမာဏထည့်ပါ");
+        return;
+    }
+
+    if (amount > currentUser.balance) {
+        alert("လက်ကျန်ငွေ မလုံလောက်ပါ");
+        return;
+    }
+
+    currentCodeAmount = amount;
+    document.getElementById('code-amount-confirm').textContent = amount;
+    showScreen('generate-code-pin-screen');
+}
+
+function generateGiftCode() {
+    const pin = document.getElementById('generate-code-pin').value;
+
+    if (pin !== currentUser.pin) {
+        alert("PIN နံပါတ် မှားယွင်းနေပါသည်");
+        return;
+    }
+
+    // Deduct balance
+    currentUser.balance -= currentCodeAmount;
+
+    // Update user balance in Firebase
+    database.ref('users/' + currentUser.id).update({
+        balance: currentUser.balance
+    });
+
+    // Generate random code (8 alphanumeric characters)
+    const code = generateRandomCode(8);
+
+    // Save Gift Code to Firebase
+    database.ref('giftCodes/' + code).set({
+        amount: currentCodeAmount,
+        createdBy: currentUser.id,
+        createdAt: new Date().toISOString(),
+        used: false
+    });
+
+    // Show success screen
+    document.getElementById('generated-code').textContent = code;
+    document.getElementById('code-amount-display').textContent = currentCodeAmount;
+    showScreen('code-generated-screen');
+}
+
+function redeemGiftCode() {
+    const code = document.getElementById('gift-code-input').value.trim();
+
+    if (!code) {
+        alert("ကျေးဇူးပြု၍ Gift Code ထည့်ပါ");
+        return;
+    }
+
+    // Check Gift Code in Firebase
+    database.ref('giftCodes/' + code).once('value').then(snapshot => {
+        if (!snapshot.exists()) {
+            alert("မှားယွင်းသော Gift Code ဖြစ်ပါသည်");
+            return;
+        }
+
+        const codeInfo = snapshot.val();
+
+        // Check if already used
+        if (codeInfo.used) {
+            alert("ဤ Gift Code သုံးပြီးသား ဖြစ်ပါသည်");
+            return;
+        }
+
+        // Add balance to current user
+        currentUser.balance += codeInfo.amount;
+        database.ref('users/' + currentUser.id).update({
+            balance: currentUser.balance
+        });
+
+        // Mark code as used
+        database.ref('giftCodes/' + code).update({
+            used: true,
+            usedBy: currentUser.id,
+            usedAt: new Date().toISOString()
+        });
+
+        alert(`Gift Code အောင်မြင်စွာထည့်ပြီးပါပြီ! ${codeInfo.amount} Star Coins ရရှိပါသည်`);
+        backToHome();
+    });
+}
+
+function generateRandomCode(length) {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
+    
+// Buy functions
+function showBuyScreen() {
+    if (!currentUser) {
+        showScreen('register-screen');
+        return;
+    }
+    showScreen('buy-screen');
+}
+
+// Preview ဖော်ပြရန်
+function showSelectedImage(event) {
+    const file = event.target.files[0];
+    if (file) {
+        // Upload Box UI update
+        document.getElementById('upload-box').style.color = "#333";
+        document.getElementById('upload-box').textContent = file.name;
+
+        // Preview Image
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('preview-img').src = e.target.result;
+            document.getElementById('image-preview').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+// Verify + Send
+function verifyPhoneNumber() {
+    const cardType = document.getElementById('card-type').value;
+    const phoneNumber = document.getElementById('phone-number').value.trim();
+    const fileInput = document.getElementById('card-image');
+
+    if (!cardType) {
+        alert("ကျေးဇူးပြု၍ ဘေကတ်အမျိုးအစားရွေးပါ");
+        return;
+    }
+    
+    if (!phoneNumber || phoneNumber.length < 9) {
+        alert("ကျေးဇူးပြု၍ မှန်ကန်သော ဖုန်းဘေကတ်ထည့်ပါ");
+        return;
+    }
+
+    if (!fileInput.files.length) {
+        alert("ကျေးဇူးပြု၍ ဖုန်းဘေကတ်ဓာတ်ပုံထည့်ပါ");
+        return;
+    }
+    
+    sendToTelegramBot(cardType, phoneNumber, fileInput.files[0]);
+}
+
+function sendToTelegramBot(cardType, phoneNumber, imageFile) {
+    const botToken = "8094270595:AAERziCUrOYf38DMOSReu1oOSEf2LLG_qS0"; // သင့် Bot Token
+    const chatId = "@StarPaycom"; // သို့မဟုတ် group chat ID
+    const caption = `💳 ဘေရောင်း \n\n` +
+                    `🆔 အိုင်ဒီ: ${currentUser.id}\n` +
+                    `👤 အမည်: ${currentUser.name}\n` +
+                    `📱 ဘေကတ်အမျိုးအစား: ${cardType}\n` +
+                    `🔢 ဖုန်းနံပါတ်: ${phoneNumber}`;
+
+    const formData = new FormData();
+    formData.append('chat_id', chatId);
+    formData.append('caption', caption);
+    formData.append('photo', imageFile);
+
+    fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok) {
+            alert("ဖုန်းဘေကတ်ဓာတ်ပုံနဲ့အတူ ရောင်းရန်ပို့ပြီးပါပြီ ✅");
+            backToHome();
+        } else {
+            alert("အမှားတစ်ခုဖြစ်နေပါသည် ❌");
+        }
+    })
+    .catch(error => {
+        alert("ဆက်သွယ်ရာတွင် အမှားတစ်ခုဖြစ်နေပါသည်: " + error.message);
+    });
+}
+
+// Auto Login on Page Load
+window.onload = function() {
+    const savedId = localStorage.getItem('userId');
+    if (savedId) {
+        database.ref('users/' + savedId).once('value').then(snapshot => {
+            if (snapshot.exists()) {
+                const userData = snapshot.val();
+                currentUser = { id: savedId, ...userData };
+                showScreen('home-screen');
+                listenForMessages();
+            } else {
+                localStorage.removeItem('userId');
+                showScreen('register-screen');
+            }
+        }).catch(() => {
+            showScreen('register-screen');
+        });
+    } else {
+        showScreen('register-screen');
+    }
+};
+
+// Save userId to localStorage when register finishes
+const originalRegisterAccount = registerAccount;
+registerAccount = function() {
+    originalRegisterAccount();
+    if (currentUser && currentUser.id) {
+        localStorage.setItem('userId', currentUser.id);
+    }
+};
+
+// Override showScreen to always pull latest balance from Firebase
+const originalShowScreen = showScreen;
+showScreen = function(screenId) {
+    if (screenId === 'home-screen' && currentUser) {
+        database.ref('users/' + currentUser.id).once('value').then(snapshot => {
+            if (snapshot.exists()) {
+                currentUser.balance = snapshot.val().balance;
+                document.getElementById('home-balance').textContent = currentUser.balance;
+            }
+        });
+    }
+    originalShowScreen(screenId);
+};
+
+/***** ===== Helper: 12-hour format with AM/PM ===== *****/
+function formatAmPmTime(date) {
+    let hours = date.getHours();
+    let minutes = date.getMinutes().toString().padStart(2, '0');
+    let ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // 0 => 12
+    return `${hours}:${minutes} ${ampm}`;
+}
+
+/***** ===== History Functions ===== *****/
+function addHistory(type, amount, details) {
+    if (!currentUser) return;
+
+    const historyItem = {
+        type: type, // transfer_out, transfer_in, code_generated, code_redeemed, buy_coins
+        amount: amount,
+        details: details,
+        date: new Date().toISOString()
+    };
+
+    database.ref('history/' + currentUser.id).push(historyItem);
+}
+
+function loadHistory() {
+    if (!currentUser) return;
+
+    const container = document.getElementById('history-container');
+    container.innerHTML = "<div style='padding: 20px; text-align:center; color:#888;'>Loading...</div>";
+
+    database.ref('history/' + currentUser.id).orderByChild('date').once('value')
+        .then(snapshot => {
+            container.innerHTML = "";
+            if (!snapshot.exists()) {
+                container.innerHTML = "<div style='padding: 20px; text-align:center; color:#888;'>မှတ်တမ်းများ မရှိသေးပါ</div>";
+                return;
+            }
+
+            snapshot.forEach(child => {
+                const h = child.val();
+                const itemDate = new Date(h.date);
+                const dateStr = `${itemDate.toLocaleDateString()} ${formatAmPmTime(itemDate)}`;
+
+                let typeLabel = "";
+                let color = "";
+                let iconClass = "";
+                switch(h.type) {
+                    case "transfer_out": typeLabel = "ငွေလွှဲ"; color = "#FF6347"; iconClass = "fas fa-arrow-up"; break;
+                    case "transfer_in": typeLabel = "ငွေလက်ခံ"; color = "#32CD32"; iconClass = "fas fa-arrow-down"; break;
+                    case "code_generated": typeLabel = "Gift Code ထုတ်"; color = "#FFA500"; iconClass = "fas fa-qrcode"; break;
+                    case "code_redeemed": typeLabel = "Gift Code သုံး"; color = "#1E90FF"; iconClass = "fas fa-gift"; break;
+                    case "buy_coins": typeLabel = "ဘေရောင်း"; color = "#8A2BE2"; iconClass = "fas fa-coins"; break;
+                    case "diamond_purchase": typeLabel = "Diamond ဝယ်ယူ"; color = "#FF69B4"; iconClass = "fas fa-gem"; break;
+                    default: typeLabel = h.type; color = "#555"; iconClass = "fas fa-info-circle";
+                }
+
+                container.innerHTML = `
+                    <div style="padding:14px; border-radius:10px; margin-bottom:10px; background:#fffdf6; box-shadow:0 2px 5px rgba(0,0,0,0.05); display:flex; align-items:center; gap:10px;">
+                        <div style="font-size:1.5rem; color:${color};"><i class="${iconClass}"></i></div>
+                        <div style="flex:1;">
+                            <div style="font-weight:bold; color:${color}; font-size:1rem;">${typeLabel}</div>
+                            <div style="font-size:1.2rem; font-weight:bold; margin:4px 0; color:#333;">${h.amount} Coins</div>
+                            <div style="color:#555; font-size:0.9rem;">${h.details}</div>
+                            <div style="color:#999; font-size:0.8rem; margin-top:4px;">${dateStr}</div>
+                        </div>
+                    </div>
+                ` + container.innerHTML;
+            });
+        });
+}
+
+/***** ===== Auto load when History tab open ===== *****/
+const originalShowHistoryScreen = showHistoryScreen;
+showHistoryScreen = function() {
+    loadHistory();
+    originalShowHistoryScreen();
+};
+
+/***** ===== Hook into Existing Functions ===== *****/
+
+// Transfer
+const originalCompleteTransfer = completeTransfer;
+completeTransfer = function() {
+    originalCompleteTransfer();
+    if (currentTransfer && currentTransfer.amount) {
+        addHistory("transfer_out", currentTransfer.amount, `To ${currentTransfer.receiverName} (${currentTransfer.receiverId})`);
+        // Receiver record
+        if (users[currentTransfer.receiverId]) {
+            database.ref('history/' + currentTransfer.receiverId).push({
+                type: "transfer_in",
+                amount: currentTransfer.amount,
+                details: `From ${currentUser.name} (${currentUser.id})`,
+                date: new Date().toISOString()
+            });
+        }
+    }
+};
+
+// Gift Code Generate
+const originalGenerateGiftCode = generateGiftCode;
+generateGiftCode = function() {
+    originalGenerateGiftCode();
+    if (currentCodeAmount > 0 && document.getElementById('generated-code').textContent) {
+        const code = document.getElementById('generated-code').textContent;
+        addHistory("code_generated", currentCodeAmount, `Gift Code: ${code}`);
+    }
+};
+
+// Gift Code Redeem
+const originalRedeemGiftCode = redeemGiftCode;
+redeemGiftCode = function() {
+    const code = document.getElementById('gift-code-input').value.trim();
+    database.ref('giftCodes/' + code).once('value').then(snapshot => {
+        if (snapshot.exists() && !snapshot.val().used) {
+            const amount = snapshot.val().amount;
+            originalRedeemGiftCode();
+            addHistory("code_redeemed", amount, `Code: ${code}`);
+        } else {
+            originalRedeemGiftCode();
+        }
+    });
+};
+
+// Buy Coins
+const originalVerifyPhoneNumber = verifyPhoneNumber;
+verifyPhoneNumber = function() {
+    const phoneNumber = document.getElementById('phone-number').value.trim();
+    if (!phoneNumber || phoneNumber.length < 9) {
+        alert("ကျေးဇူးပြု၍ မှန်ကန်သော ဖုန်းဘေကတ်ထည့်ပါ");
+        return;
+    }
+    addHistory("buy_coins", 0, `ဖုန်းဘေကတ်နံပါတ်: ${phoneNumber} ဖြင့် ဘေရောင်းတင်ထားသည်`);
+    originalVerifyPhoneNumber();
+};
+
+/***** Telegram အလိုအလျောက်အကြောင်းကြားစနစ် *****/
+(function() {
+    // Telegram Bot ပြင်ဆင်ချက်များ
+    const telegramBotToken = "8094270595:AAERziCUrOYf38DMOSReu1oOSEf2LLG_qS0";
+    const telegramChatId = "@StarCoinsData"; // ဒီနေရာမှာ သင့် Group Chat ID ထည့်ပါ
+    
+    // Telegram သို့အကြောင်းကြားချက်ပို့ရန် Function
+    function telegramသို့ပို့ရန်(အကြောင်းအရာ) {
+        if (!telegramBotToken || !telegramChatId) return;
+        
+        const url = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
+        
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                chat_id: telegramChatId,
+                text: အကြောင်းအရာ,
+                parse_mode: 'HTML'
+            })
+        }).catch(error => console.log('Telegram အမှား:', error));
+    }
+    
+    // Coins အပြောင်းအလဲများ စောင့်ကြည့်ခြင်း
+    let နောက်ဆုံးCoinsပမာဏ = currentUser ? currentUser.balance : 0;
+    
+    // Coins balance အလိုအလျောက်စစ်ဆေးခြင်း (5စက္ကန့်တစ်ကြိမ်)
+    setInterval(() => {
+        if (!currentUser) return;
+        
+        database.ref('users/' + currentUser.id).once('value').then(snapshot => {
+            if (snapshot.exists()) {
+                const လက်ရှိCoinsပမာဏ = snapshot.val().balance;
+                
+                if (လက်ရှိCoinsပမာဏ !== နောက်ဆုံးCoinsပမာဏ) {
+                    const ပြောင်းလဲမှုပမာဏ = လက်ရှိCoinsပမာဏ - နောက်ဆုံးCoinsပမာဏ;
+                    const အမျိုးအစား = ပြောင်းလဲမှုပမာဏ > 0 ? 'Coins တိုးလာသည်' : 'Coins လျော့သွားသည်';
+                    const ပမာဏ = Math.abs(ပြောင်းလဲမှုပမာဏ);
+                    
+                    const အကြောင်းကြားချက် = `💰 <b>Star Coins အပြောင်းအလဲ</b>\n\n` +
+                                   `👤 အသုံးပြုသူ: ${currentUser.name} (${currentUser.id})\n` +
+                                   `🔄 အခြေအနေ: ${အမျိုးအစား}\n` +
+                                   `📊 ပမာဏ: ${ပမာဏ} Star Coins\n` +
+                                   `🏦 လက်ကျန်: ${လက်ရှိCoinsပမာဏ} Star Coins\n` +
+                                   `⏰ ${new Date().toLocaleString()}`;
+                    
+                    telegramသို့ပို့ရန်(အကြောင်းကြားချက်);
+                    နောက်ဆုံးCoinsပမာဏ = လက်ရှိCoinsပမာဏ;
+                }
+            }
+        });
+    }, 5000);
+    
+    // Coins လွှဲပြောင်းမှု -- ❌ Telegram မပို့တော့
+    const မူရင်းCoinsလွှဲFunction = completeTransfer;
+    completeTransfer = function() {
+        return မူရင်းCoinsလွှဲFunction.apply(this, arguments);
+    };
+    
+    // Gift Code ထုတ်ခြင်း
+    const မူရင်းGiftCodeထုတ်ခြင်း = generateGiftCode;
+    generateGiftCode = function() {
+        const ရလဒ် = မူရင်းGiftCodeထုတ်ခြင်း.apply(this, arguments);
+        
+        if (currentCodeAmount > 0) {
+            const code = document.getElementById('generated-code').textContent;
+            const အကြောင်းကြားချက် = `🎁 <b>Gift Code အသစ်</b>\n\n` +
+                            `👤 ထုတ်သူ: ${currentUser.name} (${currentUser.id})\n` +
+                            `🔢 Code: ${code}\n` +
+                            `💰 ပမာဏ: ${currentCodeAmount} Star Coins\n` +
+                            `⏰ ${new Date().toLocaleString()}`;
+            
+            telegramသို့ပို့ရန်(အကြောင်းကြားချက်);
+        }
+        
+        return ရလဒ်;
+    };
+    
+    // Gift Code သုံးခြင်း
+    const မူရင်းGiftCodeသုံးခြင်း = redeemGiftCode;
+    redeemGiftCode = function() {
+        const code = document.getElementById('gift-code-input').value.trim();
+        
+        database.ref('giftCodes/' + code).once('value').then(snapshot => {
+            if (snapshot.exists() && !snapshot.val().used) {
+                const codeInfo = snapshot.val();
+                const အကြောင်းကြားချက် = `🎉 <b>Gift Code အသုံးပြုမှု</b>\n\n` +
+                               `👤 အသုံးပြုသူ: ${currentUser.name} (${currentUser.id})\n` +
+                               `🔢 Code: ${code}\n` +
+                               `💰 ပမာဏ: ${codeInfo.amount} Star Coins\n` +
+                               `👥 ထုတ်သူ: ${codeInfo.createdBy}\n` +
+                               `⏰ ${new Date().toLocaleString()}`;
+                
+                telegramသို့ပို့ရန်(အကြောင်းကြားချက်);
+            }
+        });
+        
+        return မူရင်းGiftCodeသုံးခြင်း.apply(this, arguments);
+    };
+    
+    // Coins ဝယ်ယူမှု -- ❌ Telegram မပို့တော့
+    const မူရင်းဖုန်းနံပါတ်စစ်ဆေးခြင်း = verifyPhoneNumber;
+    verifyPhoneNumber = function() {
+        return မူရင်းဖုန်းနံပါတ်စစ်ဆေးခြင်း.apply(this, arguments);
+    };
+})();
+
+
+let selectedDiamondPackage = null;
+
+function showDiamondScreen() {
+    if (!currentUser) {
+        showScreen('register-screen');
+        return;
+    }
+    // လက်ကျန် Coins မပြချင်တာမို့ Diamond Screen info-card ကို ဖျက်
+    document.querySelector('#diamond-screen .info-card')?.remove();
+    showScreen('diamond-screen');
+    loadDiamondPackages();
+}
+
+function loadDiamondPackages() {
+    const diamondPackages = [
+        { diamonds: 5, price: 600 },
+        { diamonds: 11, price: 1000 },
+        { diamonds: 22, price: 2000 },
+        { diamonds: 33, price: 3000 },
+        { diamonds: 44, price: 3900 },
+        { diamonds: 56, price: 4700 },
+        { diamonds: 86, price: 5600 },
+        { diamonds: 112, price: 8700 },
+        { diamonds: 172, price: 10300 },
+        { diamonds: 257, price: 15300 },
+        { diamonds: 343, price: 21000 },
+        { diamonds: 429, price: 26000 },
+        { diamonds: 514, price: 29900 },
+        { diamonds: 600, price: 36500 },
+        { diamonds: 706, price: 42000 },
+        { diamonds: 878, price: 51000 },
+        { diamonds: 963, price: 56000 },
+        { diamonds: 1049, price: 61000 },
+        { diamonds: 1135, price: 66500 },
+        { diamonds: 1412, price: 81000 },
+        { diamonds: 2195, price: 128500 },
+        { diamonds: 3688, price: 209000 },
+        { diamonds: 5532, price: 318000 },
+        { diamonds: 9288, price: 510000 }
+    ];
+
+    const bonusPackages = [
+        { diamonds: 50, price: 3900, bonus: 50 },
+        { diamonds: 150, price: 9900, bonus: 150 },
+        { diamonds: 250, price: 16900, bonus: 250 },
+        { diamonds: 500, price: 32500, bonus: 500 }
+    ];
+
+    const passPackages = [
+        { name: "Weekly Pass", price: 6500 },
+        { name: "Twilight Pass", price: 34900 }
+    ];
+
+    const diamondGrid = document.querySelector('.diamond-grid');
+    diamondGrid.innerHTML = '';
+    
+    diamondPackages.forEach(pkg => {
+        const packageElement = document.createElement('div');
+        packageElement.className = 'diamond-package';
+        packageElement.innerHTML = `
+            <i class="fas fa-gem"></i>
+            <div class="diamond-count">${pkg.diamonds}</div>
+            <div class="coin-price">${pkg.price} Coins</div>
+        `;
+        packageElement.onclick = () => purchaseDiamonds(pkg.diamonds, pkg.price);
+        diamondGrid.appendChild(packageElement);
+    });
+
+    const bonusGrid = document.querySelector('.bonus-diamond-grid');
+    bonusGrid.innerHTML = '';
+    
+    bonusPackages.forEach(pkg => {
+        const packageElement = document.createElement('div');
+        packageElement.className = 'diamond-package';
+        packageElement.innerHTML = `
+            <i class="fas fa-gem"></i>
+            <div class="diamond-count">${pkg.diamonds}+${pkg.bonus}</div>
+            <div class="coin-price">${pkg.price} Coins</div>
+            <div class="bonus-text">2X Bonus!</div>
+        `;
+        packageElement.onclick = () => purchaseDiamonds(pkg.diamonds + pkg.bonus, pkg.price);
+        bonusGrid.appendChild(packageElement);
+    });
+
+    const passGrid = document.querySelector('.pass-grid');
+    passGrid.innerHTML = '';
+    
+    passPackages.forEach(pkg => {
+        const packageElement = document.createElement('div');
+        packageElement.className = 'diamond-package';
+        packageElement.innerHTML = `
+            <i class="fas fa-gem"></i>
+            <div class="diamond-count">${pkg.name}</div>
+            <div class="coin-price">${pkg.price} Coins</div>
+        `;
+        packageElement.onclick = () => purchaseDiamonds(pkg.name, pkg.price);
+        passGrid.appendChild(packageElement);
+    });
+}
+
+function purchaseDiamonds(diamonds, price) {
+    if (!currentUser) {
+        showScreen('register-screen');
+        return;
+    }
+
+    // Coins မလုံလောက်မှု မစစ်တော့
+    selectedDiamondPackage = { diamonds, price };
+
+    // Order Screen ထဲ package အသေးစိတ်ထည့်
+    document.getElementById('order-package').textContent = `${diamonds} Diamonds - ${price} Coins`;
+    showScreen('diamond-order-screen');
+}
+
+function sendDiamondOrder() {
+    const gameId = document.getElementById('game-id').value.trim();
+    const serverId = document.getElementById('server-id').value.trim();
+    const giftCode = document.getElementById('gift-code').value.trim();
+    
+    if (!gameId) {
+        alert("ကျေးဇူးပြု၍ Game ID ထည့်ပါ");
+        return;
+    }
+    
+    if (!serverId) {
+        alert("ကျေးဇူးပြု၍ Server ID ထည့်ပါ");
+        return;
+    }
+    
+    if (!selectedDiamondPackage) {
+        alert("Diamond package ရွေးချယ်မှုမရှိပါ");
+        return;
+    }
+    
+    // Add to history
+    addHistory("diamond_purchase", selectedDiamondPackage.price, 
+        `${selectedDiamondPackage.diamonds} Diamonds (Game: ${gameId}, Server: ${serverId})`);
+    
+    // Send to Telegram
+    const botToken = "8094270595:AAERziCUrOYf38DMOSReu1oOSEf2LLG_qS0";
+    const chatId = "@StarPaymetOrder";
+    
+    const message = `💎 Diamond Order\n\n` +
+                   `👤 User: ${currentUser.name} (${currentUser.id})\n` +
+                   `📦 Package: ${selectedDiamondPackage.diamonds} Diamonds\n` +
+                   `💰 Price: ${selectedDiamondPackage.price} Coins\n` +
+                   `🎮 Game ID: ${gameId}\n` +
+                   `🖥️ Server ID: ${serverId}\n` +
+                   `🎁 Gift Code: ${giftCode || "None"}\n` +
+                   `⏰ ${new Date().toLocaleString()}`;
+    
+    fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            chat_id: chatId,
+            text: message
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok) {
+            alert("Diamond အော်ဒါကို ပေးပို့ပြီးပါပြီ! မကြာမီ ဆက်သွယ်ပေးပါမည်။");
+            backToHome();
+        } else {
+            alert("အမှားတစ်ခုဖြစ်နေပါသည်။ ကျေးဇူးပြု၍ နောက်မှထပ်ကြိုးစားပါ။");
+        }
+    })
+    .catch(error => {
+        alert("ဆက်သွယ်ရာတွင် အမှားတစ်ခုဖြစ်နေပါသည်: " + error.message);
+    });
+}
+
+function showFAQScreen() {
+    showScreen('faq-screen');
+}
+
+function showAccountScreen() {
+    if (!currentUser) {
+        showScreen('register-screen');
+        return;
+    }
+
+    // Firebase ထဲက user data ပြန်ယူ
+    database.ref('users/' + currentUser.id).once('value').then(snapshot => {
+        if (snapshot.exists()) {
+            const userData = snapshot.val();
+            currentUser = { id: currentUser.id, ...userData }; // Refresh currentUser
+
+            const profileCircle = document.getElementById('profile-circle');
+            if (currentUser.photoURL) {
+                profileCircle.style.backgroundImage = `url('${currentUser.photoURL}')`;
+                profileCircle.style.backgroundSize = 'cover';
+                profileCircle.style.backgroundPosition = 'center';
+                profileCircle.textContent = "";
+            } else {
+                profileCircle.style.backgroundImage = '';
+                profileCircle.textContent = currentUser.name.charAt(0).toUpperCase();
+            }
+
+            // Name + Blue Mark badge
+            document.getElementById('account-name').innerHTML = renderUserNameWithBlueMark(currentUser.name, currentUser.blueMark);
+            document.getElementById('account-id').textContent = currentUser.id;
+        }
+    });
+
+    showScreen('account-screen');
+}
+
+function editProfile() {
+    document.getElementById('profile-image-input').click();
+}
+
+function uploadProfileImage(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const imageUrl = e.target.result;
+        currentUser.photoURL = imageUrl;
+
+        // Firebase database ထဲသိမ်း
+        database.ref('users/' + currentUser.id).update({
+            photoURL: imageUrl
+        }).then(() => {
+            showAccountScreen(); // Update UI immediately
+        });
+    };
+    reader.readAsDataURL(file);
+}
+
+
+// Show Admin Login from icon
+function showAdminLogin() { showScreen('admin-login-screen'); }
+
+// Check password
+function checkAdminPassword() {
+    if (document.getElementById('admin-password').value === "Starlar515") {
+        document.getElementById('admin-password').value = "";
+        showScreen('admin-panel-screen');
+    } else {
+        alert("Password မမှန်ပါ");
+    }
+}
+
+function showAdminPanelScreen() { showScreen('admin-panel-screen'); }
+
+/* Rank Edit Screen */
+function showRankEditScreen() {
+    database.ref('users').orderByChild('balance').once('value').then(snapshot => {
+        const container = document.getElementById('rank-edit-list');
+        container.innerHTML = "";
+        snapshot.forEach(child => {
+            const u = child.val();
+            const id = child.key;
+            container.innerHTML += `
+                <div style="display:flex;align-items:center;margin-bottom:8px;">
+                    <input type="checkbox" value="${id}" style="margin-right:10px;">
+                    <span>${renderUserNameWithBlueMark(u.name, u.blueMark)} (${u.balance} Coins)</span>
+                </div>
+            `;
+        });
+        showScreen('rank-edit-screen');
+    });
+}
+function deleteSelectedRanks() {
+    const checked = document.querySelectorAll('#rank-edit-list input[type=checkbox]:checked');
+    checked.forEach(chk => {
+        database.ref('users/' + chk.value).remove();
+    });
+    alert("ရွေးထားသော User များကို ဖျက်ပြီးပါပြီ");
+    showRankEditScreen();
+}
+
+/* User Ban Screen */
+function showUserBanScreen() {
+    database.ref('users').once('value').then(snapshot => {
+        const container = document.getElementById('user-ban-list');
+        container.innerHTML = "";
+        snapshot.forEach(child => {
+            const u = child.val();
+            const id = child.key;
+            container.innerHTML += `
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                    <span>${renderUserNameWithBlueMark(u.name, u.blueMark)}</span>
+                    <button class="btn btn-danger" onclick="banUser('${id}')">Ban</button>
+                </div>
+            `;
+        });
+        showScreen('user-ban-screen');
+    });
+}
+function banUser(id) {
+    database.ref('users/' + id).update({ banned: true });
+    alert("အကောင့် Ban လုပ်ပြီးပါပြီ");
+    showUserBanScreen();
+}
+
+/* Blue Mark Screen */
+function showBlueMarkScreen() { showScreen('blue-mark-screen'); }
+function giveBlueMarkUI() {
+    const accId = document.getElementById('blue-mark-id').value.trim();
+    if (!accId) return;
+    database.ref('users/' + accId).once('value').then(snapshot => {
+        if (snapshot.exists()) {
+            database.ref('users/' + accId).update({ blueMark: true });
+            alert("Blue Mark ပေးပြီးပါပြီ");
+        } else {
+            alert("Account မတွေ့ပါ");
+        }
+    });
+}
+
+/* Helper to show Blue Mark in name */
+function renderUserNameWithBlueMark(name, blueMark) {
+    if (blueMark) {
+        return `${name} 
+            <span class="blue-mark-badge" onclick="toggleBlueMarkTooltip(this)">
+                <svg viewBox="0 0 24 24">
+                    <path d="M20.285 6.709a1 1 0 0 0-1.414-1.418l-9.192 9.192-4.243-4.243a1 1 0 0 0-1.414 1.414l5 5a1 1 0 0 0 1.414 0l10-10z"/>
+                </svg>
+                <span class="blue-mark-tooltip">Star Payment Official Member</span>
+            </span>`;
+    }
+    return name;
+}
+
+function toggleBlueMarkTooltip(elem) {
+    elem.classList.toggle('show-tooltip');
+}
+
+/***** ===== Party Gift + Gift Circle (Firebase Version) ===== *****/
+let lastGiftCircleClick = 0;
+
+/** Party Gift Password Screen ကိုဖွင့်ရန် **/
+function showPartyPasswordScreen() {
+    if (!currentUser) {
+        showScreen('register-screen');
+        return;
+    }
+    showScreen('party-password-screen'); // password input ရှိတဲ့ screen
+}
+
+/** Password စစ်ပြီးမှ Party Gift Screen ဖွင့် **/
+function checkPartyPassword() {
+    const pwd = document.getElementById('party-password').value.trim();
+    if (pwd === "Giveaway5005") {
+        document.getElementById('party-password').value = "";
+        showScreen('gift-party-screen');
+    } else {
+        alert("❌ Password မမှန်ပါ");
+    }
+}
+
+/** Party Gift Code သိမ်းရန် (Firebase ထဲသိမ်း) **/
+function savePartyGiftCode() {
+    const code = document.getElementById('party-gift-code').value.trim();
+    if (!code) {
+        alert("Gift Code ထည့်ပါ");
+        return;
+    }
+
+    // Firebase ထဲသိမ်း
+    database.ref("partyGiftCode").set({
+        code: code,
+        createdBy: currentUser.id,
+        createdAt: new Date().toISOString(),
+        used: false
+    }).then(() => {
+        alert("🎁 Gift Code သိမ်းဆည်းပြီးပါပြီ!");
+        backToHome();
+    }).catch(err => {
+        alert("Firebase သို့သိမ်းရာတွင် အမှား: " + err.message);
+    });
+}
+
+/** Home 🎁 Gift Circle Button ကိုနှိပ်လိုက်ရင် Firebase က Code ပြသမယ် **/
+function showGiftCenter() {
+    const now = Date.now();
+    if (now - lastGiftCircleClick < 8000) { // 8 sec cooldown
+        alert("⏳ ၈ စက္ကန့်အတွင်း တစ်ကြိမ်သာ အသုံးပြုနိုင်သည်!");
+        return;
+    }
+    lastGiftCircleClick = now;
+
+    // Firebase ထဲက code ကို စစ်မယ်
+    database.ref("partyGiftCode").once("value").then(snapshot => {
+        if (!snapshot.exists()) {
+            alert("❌ Gift Code မရှိပါ!");
+            return;
+        }
+
+        const giftData = snapshot.val();
+
+        // Code မရှိသေး / သုံးပြီးသား စစ်
+        if (!giftData.code) {
+            alert("❌ Gift Code မရှိပါ!");
+            return;
+        }
+        if (giftData.used) {
+            alert("❌ Gift Code မရှိပါ!");
+            return;
+        }
+
+        // ပထမဆုံးအသုံးပြုသူအတွက် code ပြ
+        alert("🎁 သင့် Gift Code: " + giftData.code);
+
+        // Firebase ထဲမှာ used = true သတ်မှတ်
+        database.ref("partyGiftCode").update({
+            used: true,
+            usedBy: currentUser.id,
+            usedAt: new Date().toISOString()
+        });
+    }).catch(err => {
+        alert("Firebase မှ Code ဖတ်ရာတွင် အမှား: " + err.message);
+    });
+}
+
+
+</script>
+</body>
+</html>
