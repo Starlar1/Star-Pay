@@ -1,0 +1,154 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ပြန်အသုံးပြုနိုင်မည့်နေ့</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans Myanmar', sans-serif;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .message-container {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            padding: 30px;
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+            overflow: hidden;
+            transform: translateZ(0);
+            will-change: transform;
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        h1 {
+            color: #E65100;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .date {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #B71C1C;
+            margin: 1.5rem 0;
+            text-shadow: 0 2px 3px rgba(0,0,0,0.1);
+            position: relative;
+            display: inline-block;
+            animation: pulse 1.5s infinite alternate;
+        }
+        
+        .message {
+            font-size: 1.2rem;
+            color: #5D4037;
+            line-height: 1.6;
+            margin-top: 1.5rem;
+            font-weight: 500;
+        }
+        
+        .sun-rays {
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,235,59,0.2) 0%, transparent 60%);
+            animation: rotate 30s linear infinite;
+            z-index: -1;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.05); }
+        }
+        
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Android-friendly touch interactions */
+        .message-container:active {
+            transform: scale(0.98);
+            transition: transform 0.1s;
+        }
+        
+        /* Optimize for mobile performance */
+        @media (max-width: 480px) {
+            .message-container {
+                padding: 25px;
+                border-radius: 20px;
+            }
+            
+            h1 {
+                font-size: 1.3rem;
+            }
+            
+            .date {
+                font-size: 1.8rem;
+            }
+            
+            .message {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="message-container">
+        <div class="sun-rays"></div>
+        
+        <h1>ကျေးဇူးပြု၍ စောင့်မျှော်ပေးပါ</h1>
+        
+        <div class="date">၂၆ ရက်နေ့တွင်</div>
+        
+        <div class="message">
+            ပြန်လည်အသုံးပြုနိုင်မည်ဖြစ်ပါသည်
+        </div>
+    </div>
+
+    <script>
+        // Android touch optimization
+        document.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+        
+        // Add slight tilt effect on touch
+        const container = document.querySelector('.message-container');
+        
+        container.addEventListener('touchstart', function() {
+            this.style.transition = 'transform 0.1s';
+        });
+        
+        container.addEventListener('touchend', function() {
+            this.style.transition = 'transform 0.3s';
+            this.style.transform = 'scale(1)';
+        });
+    </script>
+</body>
+</html>
